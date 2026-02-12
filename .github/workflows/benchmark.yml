@@ -45,6 +45,9 @@ jobs:
           key: ${{ runner.os }}-cargo-bench-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-bench-
 
+      - name: Compile benchmarks
+        run: cargo bench --bench acl_bench --bench password_bench --bench config_bench --bench socks5_bench --no-run
+
       - name: Run benchmarks
         run: |
           cargo bench --bench acl_bench --bench password_bench --bench config_bench --bench socks5_bench \
