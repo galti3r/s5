@@ -3,15 +3,15 @@ use s5::config::types::{AclPolicyConfig, GlobalAclConfig, UserAclConfig};
 
 #[test]
 fn test_acl_deny_metadata_endpoint() {
-    let acl =
-        ParsedAcl::from_config(AclPolicyConfig::Allow, &[], &["169.254.169.254:*".to_string()])
-            .unwrap();
+    let acl = ParsedAcl::from_config(
+        AclPolicyConfig::Allow,
+        &[],
+        &["169.254.169.254:*".to_string()],
+    )
+    .unwrap();
     let ip = "169.254.169.254".parse().unwrap();
     assert_eq!(acl.check("169.254.169.254", 80, Some(ip)), AclPolicy::Deny);
-    assert_eq!(
-        acl.check("169.254.169.254", 443, Some(ip)),
-        AclPolicy::Deny
-    );
+    assert_eq!(acl.check("169.254.169.254", 443, Some(ip)), AclPolicy::Deny);
 }
 
 #[test]
@@ -31,8 +31,7 @@ fn test_acl_allow_specific_domain() {
 #[test]
 fn test_acl_cidr_with_port() {
     let acl =
-        ParsedAcl::from_config(AclPolicyConfig::Deny, &["10.0.0.0/8:*".to_string()], &[])
-            .unwrap();
+        ParsedAcl::from_config(AclPolicyConfig::Deny, &["10.0.0.0/8:*".to_string()], &[]).unwrap();
 
     assert_eq!(
         acl.check("10.1.2.3", 80, Some("10.1.2.3".parse().unwrap())),
@@ -151,10 +150,7 @@ fn test_global_acl_inherit_false_ignores_global() {
     let acl = ParsedAcl::from_config_merged(&global, &user).unwrap();
     // Global deny on metadata is NOT applied
     let ip = "169.254.169.254".parse().unwrap();
-    assert_eq!(
-        acl.check("169.254.169.254", 80, Some(ip)),
-        AclPolicy::Allow
-    );
+    assert_eq!(acl.check("169.254.169.254", 80, Some(ip)), AclPolicy::Allow);
     // User default is Allow (independently set)
     assert_eq!(acl.check("anything.com", 80, None), AclPolicy::Allow);
 }

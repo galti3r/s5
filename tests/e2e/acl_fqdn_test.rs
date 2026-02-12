@@ -55,7 +55,11 @@ async fn test_acl_fqdn_allow_local_forward() {
         .expect("timeout")
         .expect("read error");
 
-    assert_eq!(&buf[..n], b"acl-allowed", "echo should work through allowed ACL");
+    assert_eq!(
+        &buf[..n],
+        b"acl-allowed",
+        "echo should work through allowed ACL"
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -122,13 +126,7 @@ async fn test_acl_fqdn_default_deny() {
     let (echo_port, _echo_task) = tcp_echo_server().await;
 
     // Allow only port 9999 (not our echo_port), default deny
-    let config = acl_config(
-        ssh_port,
-        &hash,
-        &["127.0.0.1:9999"],
-        &[],
-        "deny",
-    );
+    let config = acl_config(ssh_port, &hash, &["127.0.0.1:9999"], &[], "deny");
     let _server = start_ssh(config).await;
 
     let client_config = Arc::new(russh::client::Config::default());
@@ -173,13 +171,7 @@ async fn test_acl_wildcard_port() {
     let (echo_port, _echo_task) = tcp_echo_server().await;
 
     // Allow 127.0.0.1:* (any port)
-    let config = acl_config(
-        ssh_port,
-        &hash,
-        &["127.0.0.1:*"],
-        &[],
-        "deny",
-    );
+    let config = acl_config(ssh_port, &hash, &["127.0.0.1:*"], &[], "deny");
     let _server = start_ssh(config).await;
 
     let client_config = Arc::new(russh::client::Config::default());

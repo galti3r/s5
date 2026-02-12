@@ -113,7 +113,12 @@ impl SecurityManager {
     pub fn pre_auth_check(&self, ip: &IpAddr) -> Result<(), &'static str> {
         // P2-1: Per-IP rate limiting (before other checks)
         let normalized = normalize_ip(*ip);
-        if !self.ban_whitelist.iter().any(|net| net.contains(&normalized)) && !self.ip_rate_limiter.check(&normalized) {
+        if !self
+            .ban_whitelist
+            .iter()
+            .any(|net| net.contains(&normalized))
+            && !self.ip_rate_limiter.check(&normalized)
+        {
             return Err("IP rate limit exceeded");
         }
         if !self.check_source_ip(ip) {

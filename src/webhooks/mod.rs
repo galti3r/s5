@@ -107,7 +107,8 @@ impl WebhookDispatcher {
                                 warn!(url = %url, error = %e, attempts = attempt + 1, "Webhook delivery failed after retries");
                                 return;
                             }
-                            let delay_ms = (retry_delay_ms * 2u64.pow(attempt)).min(max_retry_delay_ms);
+                            let delay_ms =
+                                (retry_delay_ms * 2u64.pow(attempt)).min(max_retry_delay_ms);
                             warn!(url = %url, error = %e, attempt = attempt, next_retry_ms = delay_ms, "Webhook delivery failed, retrying");
                             tokio::time::sleep(std::time::Duration::from_millis(delay_ms)).await;
                             attempt += 1;

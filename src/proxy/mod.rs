@@ -16,7 +16,10 @@ use chrono::{DateTime, Utc};
 use dashmap::DashMap;
 use serde::Serialize;
 use std::net::SocketAddr;
-use std::sync::atomic::{AtomicU32, AtomicU64, Ordering::{self, AcqRel, Acquire}};
+use std::sync::atomic::{
+    AtomicU32, AtomicU64,
+    Ordering::{self, AcqRel, Acquire},
+};
 use std::sync::Arc;
 use std::time::Duration;
 use tracing::info;
@@ -156,7 +159,11 @@ impl ProxyEngine {
         let max_global = self.config.limits.max_connections;
         self.global_connections
             .fetch_update(AcqRel, Acquire, |c| {
-                if c >= max_global { None } else { Some(c + 1) }
+                if c >= max_global {
+                    None
+                } else {
+                    Some(c + 1)
+                }
             })
             .map_err(|_| anyhow::anyhow!("global connection limit reached"))?;
 
@@ -168,7 +175,11 @@ impl ProxyEngine {
                 .or_insert_with(|| AtomicU32::new(0));
             if user_entry
                 .fetch_update(AcqRel, Acquire, |c| {
-                    if c >= max_per_user { None } else { Some(c + 1) }
+                    if c >= max_per_user {
+                        None
+                    } else {
+                        Some(c + 1)
+                    }
                 })
                 .is_err()
             {
@@ -222,11 +233,19 @@ impl ProxyEngine {
 
         // Connect to target (with DNS cache)
         let ip_guard_enabled = self.config.security.ip_guard_enabled;
-        let (tcp_stream, resolved_addr) =
-            connector::connect_with_cache(host, port, self.config.limits.connection_timeout, ip_guard_enabled, &self.dns_cache, self.metrics.as_deref()).await?;
+        let (tcp_stream, resolved_addr) = connector::connect_with_cache(
+            host,
+            port,
+            self.config.limits.connection_timeout,
+            ip_guard_enabled,
+            &self.dns_cache,
+            self.metrics.as_deref(),
+        )
+        .await?;
 
         // Post-check ACL with resolved IP (for CIDR rules)
-        let post_decision = acl::check_and_log(user_acl, username, host, port, Some(resolved_addr.ip()));
+        let post_decision =
+            acl::check_and_log(user_acl, username, host, port, Some(resolved_addr.ip()));
         if !post_decision.allowed {
             self.audit.log_acl_deny(
                 username,
@@ -249,8 +268,16 @@ impl ProxyEngine {
         &self,
         req: SshRelayRequest<'_>,
     ) -> Result<(u64, u64, SocketAddr)> {
-        let (tcp_stream, resolved_addr, _guard) =
-            self.connect_checked(req.username, req.host, req.port, req.user_acl, req.source_ip, req.max_per_user).await?;
+        let (tcp_stream, resolved_addr, _guard) = self
+            .connect_checked(
+                req.username,
+                req.host,
+                req.port,
+                req.user_acl,
+                req.source_ip,
+                req.max_per_user,
+            )
+            .await?;
 
         // Register the live session for tracking
         let session = self.register_session(req.username, req.host, req.port, req.source_ip, "ssh");
@@ -296,7 +323,8 @@ impl ProxyEngine {
         source_ip: &str,
         max_per_user: u32,
     ) -> Result<(tokio::net::TcpStream, std::net::SocketAddr, ConnectionGuard)> {
-        self.connect_checked(username, host, port, user_acl, source_ip, max_per_user).await
+        self.connect_checked(username, host, port, user_acl, source_ip, max_per_user)
+            .await
     }
 
     pub fn active_connections(&self) -> u32 {
@@ -362,12 +390,16 @@ impl ProxyEngine {
 
     /// Get snapshots of all active sessions.
     pub fn get_sessions(&self) -> Vec<SessionSnapshot> {
-        self.active_sessions.iter().map(|e| e.value().snapshot()).collect()
+        self.active_sessions
+            .iter()
+            .map(|e| e.value().snapshot())
+            .collect()
     }
 
     /// Get snapshots of sessions for a specific user.
     pub fn get_user_sessions(&self, username: &str) -> Vec<SessionSnapshot> {
-        self.active_sessions.iter()
+        self.active_sessions
+            .iter()
             .filter(|e| e.value().username == username)
             .map(|e| e.value().snapshot())
             .collect()

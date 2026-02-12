@@ -126,7 +126,7 @@ async fn test_read_connect_request_empty_domain() {
     // Domain with length 0
     let mut payload = vec![0x05, CMD_CONNECT, 0x00, ATYP_DOMAIN];
     payload.push(0x00); // domain length = 0
-    // Still need port bytes so the read_u8 for length succeeds
+                        // Still need port bytes so the read_u8 for length succeeds
     payload.extend_from_slice(&80u16.to_be_bytes());
     client.write_all(&payload).await.unwrap();
     drop(client);

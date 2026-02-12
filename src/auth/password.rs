@@ -1,9 +1,9 @@
 use anyhow::Result;
+use argon2::password_hash::rand_core::RngCore;
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2,
 };
-use argon2::password_hash::rand_core::RngCore;
 
 /// Hash a password using Argon2id with configurable parameters.
 ///

@@ -62,8 +62,7 @@ impl russh::server::Server for TestSshServer {
     type Handler = SshHandler;
 
     fn new_client(&mut self, peer_addr: Option<std::net::SocketAddr>) -> SshHandler {
-        let peer = peer_addr
-            .unwrap_or_else(|| "0.0.0.0:0".parse().expect("valid fallback"));
+        let peer = peer_addr.unwrap_or_else(|| "0.0.0.0:0".parse().expect("valid fallback"));
         SshHandler::new(self.ctx.clone(), peer)
     }
 }
@@ -105,8 +104,7 @@ async fn start_ssh_server(config: AppConfig) -> (u16, tokio::task::JoinHandle<()
     let key_pair = KeyPair::generate_ed25519();
     let mut ssh_config = russh::server::Config::default();
     ssh_config.keys.push(key_pair);
-    ssh_config.server_id =
-        russh::SshId::Standard("SSH-2.0-s5_e2e_test".to_string());
+    ssh_config.server_id = russh::SshId::Standard("SSH-2.0-s5_e2e_test".to_string());
     ssh_config.auth_rejection_time = Duration::from_millis(100);
     ssh_config.auth_rejection_time_initial = Some(Duration::from_millis(0));
     let ssh_config = Arc::new(ssh_config);

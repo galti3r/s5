@@ -34,9 +34,7 @@ fn gen_ca_keypair() -> (PrivateKey, String) {
 fn gen_user_key() -> KeyData {
     let signing_key = ed25519_dalek::SigningKey::generate(&mut rand::rngs::OsRng);
     let verifying_key = signing_key.verifying_key();
-    KeyData::Ed25519(ssh_key::public::Ed25519PublicKey(
-        verifying_key.to_bytes(),
-    ))
+    KeyData::Ed25519(ssh_key::public::Ed25519PublicKey(verifying_key.to_bytes()))
 }
 
 /// Helper: sign a user certificate with the given CA.
@@ -69,9 +67,7 @@ fn make_minimal_config(ca_key_str: Option<&str>) -> AppConfig {
     user.password_hash = Some(fake_hash.to_string());
 
     let security = SecurityConfig {
-        trusted_user_ca_keys: ca_key_str
-            .map(|s| vec![s.to_string()])
-            .unwrap_or_default(),
+        trusted_user_ca_keys: ca_key_str.map(|s| vec![s.to_string()]).unwrap_or_default(),
         ..SecurityConfig::default()
     };
 
@@ -92,10 +88,7 @@ fn test_auth_service_no_trusted_cas_by_default() {
     let config = make_minimal_config(None);
     let auth = AuthService::new(&config).expect("AuthService creation");
 
-    assert!(
-        auth.trusted_cas().is_empty(),
-        "No trusted CAs by default"
-    );
+    assert!(auth.trusted_cas().is_empty(), "No trusted CAs by default");
 }
 
 #[test]

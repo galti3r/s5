@@ -1,6 +1,9 @@
 use super::{ApiResponse, AppState};
 use crate::quota::UserQuotaUsage;
-use axum::{extract::{Query, State}, response::IntoResponse};
+use axum::{
+    extract::{Query, State},
+    response::IntoResponse,
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
@@ -38,14 +41,20 @@ pub async fn list_users(
         .iter()
         .filter_map(|name| {
             store.get(name).map(|u| {
-                let (current_connections, total_bytes_transferred, quota_usage) = if include_details {
+                let (current_connections, total_bytes_transferred, quota_usage) = if include_details
+                {
                     let conns = state.proxy_engine.user_connections(name);
-                    let bytes = state.metrics.bytes_transferred
+                    let bytes = state
+                        .metrics
+                        .bytes_transferred
                         .get_or_create(&crate::metrics::collectors::UserLabel {
                             user: name.clone(),
                         })
                         .get();
-                    let usage = state.quota_tracker.as_ref().map(|qt| qt.get_user_usage(name));
+                    let usage = state
+                        .quota_tracker
+                        .as_ref()
+                        .map(|qt| qt.get_user_usage(name));
                     (Some(conns), Some(bytes), usage)
                 } else {
                     (None, None, None)

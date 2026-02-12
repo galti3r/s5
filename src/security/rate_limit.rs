@@ -56,23 +56,19 @@ impl IpRateLimiter {
                 let evicted = self.evict_oldest(self.max_entries / 10);
                 warn!(
                     tracked_ips = self.limiters.len(),
-                    evicted,
-                    "IP rate limiter at capacity, evicted oldest entries"
+                    evicted, "IP rate limiter at capacity, evicted oldest entries"
                 );
             }
         }
 
-        let entry = self
-            .limiters
-            .entry(*ip)
-            .or_insert_with(|| {
-                let quota =
-                    Quota::per_minute(NonZeroU32::new(self.max_per_minute).unwrap_or(NonZeroU32::MIN));
-                TrackedLimiter {
-                    limiter: Arc::new(RateLimiter::direct(quota)),
-                    last_used: Instant::now(),
-                }
-            });
+        let entry = self.limiters.entry(*ip).or_insert_with(|| {
+            let quota =
+                Quota::per_minute(NonZeroU32::new(self.max_per_minute).unwrap_or(NonZeroU32::MIN));
+            TrackedLimiter {
+                limiter: Arc::new(RateLimiter::direct(quota)),
+                last_used: Instant::now(),
+            }
+        });
 
         let mut tracked = entry;
         tracked.last_used = Instant::now();
@@ -87,7 +83,11 @@ impl IpRateLimiter {
             .retain(|_, tracked| now.duration_since(tracked.last_used) < max_age);
         let removed = before.saturating_sub(self.limiters.len());
         if removed > 0 {
-            debug!(removed, remaining = self.limiters.len(), "IP rate limiter stale cleanup");
+            debug!(
+                removed,
+                remaining = self.limiters.len(),
+                "IP rate limiter stale cleanup"
+            );
         }
     }
 
@@ -156,8 +156,7 @@ impl UserRateLimiter {
                 let evicted = self.evict_oldest(self.max_entries / 10);
                 warn!(
                     tracked_users = self.limiters.len(),
-                    evicted,
-                    "User rate limiter at capacity, evicted oldest entries"
+                    evicted, "User rate limiter at capacity, evicted oldest entries"
                 );
             }
         }
@@ -187,7 +186,11 @@ impl UserRateLimiter {
             .retain(|_, tracked| now.duration_since(tracked.last_used) < max_age);
         let removed = before.saturating_sub(self.limiters.len());
         if removed > 0 {
-            debug!(removed, remaining = self.limiters.len(), "User rate limiter stale cleanup");
+            debug!(
+                removed,
+                remaining = self.limiters.len(),
+                "User rate limiter stale cleanup"
+            );
         }
     }
 

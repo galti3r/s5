@@ -212,11 +212,7 @@ impl AuthService {
     /// - Certificate principals include the authenticating user (or are empty)
     /// - Certificate type is User (not Host)
     /// - All critical options are recognized
-    pub fn auth_publickey_certificate(
-        &self,
-        username: &str,
-        cert: &ssh_key::Certificate,
-    ) -> bool {
+    pub fn auth_publickey_certificate(&self, username: &str, cert: &ssh_key::Certificate) -> bool {
         if self.trusted_cas.is_empty() {
             tracing::debug!(
                 username = %username,
@@ -267,11 +263,7 @@ impl AuthService {
 ///
 /// Step 1: If at capacity, remove expired entries.
 /// Step 2: If still at capacity (all entries valid), evict the oldest 10% by expiry.
-fn enforce_totp_hard_cap(
-    map: &DashMap<(String, String), u64>,
-    max_codes: usize,
-    now: u64,
-) {
+fn enforce_totp_hard_cap(map: &DashMap<(String, String), u64>, max_codes: usize, now: u64) {
     // Step 1: remove expired entries
     if map.len() >= max_codes {
         map.retain(|_, expiry| *expiry > now);
@@ -279,10 +271,8 @@ fn enforce_totp_hard_cap(
     // Step 2: hard cap — evict oldest if still at capacity
     if map.len() >= max_codes {
         let evict_count = std::cmp::max(max_codes / 10, 1);
-        let mut entries: Vec<((String, String), u64)> = map
-            .iter()
-            .map(|e| (e.key().clone(), *e.value()))
-            .collect();
+        let mut entries: Vec<((String, String), u64)> =
+            map.iter().map(|e| (e.key().clone(), *e.value())).collect();
         entries.sort_by_key(|(_, expiry)| *expiry);
         for (evict_key, _) in entries.into_iter().take(evict_count) {
             map.remove(&evict_key);
@@ -374,10 +364,7 @@ mod tests {
 
         // Only 50 entries — below cap
         for i in 0..50 {
-            map.insert(
-                (format!("user{i}"), format!("code{i}")),
-                now + 100,
-            );
+            map.insert((format!("user{i}"), format!("code{i}")), now + 100);
         }
 
         enforce_totp_hard_cap(&map, max, now);
@@ -394,10 +381,7 @@ mod tests {
 
         // Fill exactly to capacity with all valid entries
         for i in 0..100u64 {
-            map.insert(
-                (format!("user{i}"), format!("code{i}")),
-                now + 1 + i,
-            );
+            map.insert((format!("user{i}"), format!("code{i}")), now + 1 + i);
         }
 
         enforce_totp_hard_cap(&map, max, now);

@@ -20,7 +20,9 @@ async fn start_test_metrics_server() -> (u16, Arc<MetricsRegistry>, Arc<AtomicBo
     let addr = format!("127.0.0.1:{}", port);
 
     tokio::spawn(async move {
-        api::start_metrics_server(&addr, m, maint, tokio_util::sync::CancellationToken::new()).await.unwrap();
+        api::start_metrics_server(&addr, m, maint, tokio_util::sync::CancellationToken::new())
+            .await
+            .unwrap();
     });
 
     // Wait for server to start
@@ -74,10 +76,7 @@ async fn test_real_metrics_server_prometheus() {
         body.contains("s5_bytes_transferred"),
         "should contain bytes transferred metric"
     );
-    assert!(
-        body.contains("testuser"),
-        "should contain user label"
-    );
+    assert!(body.contains("testuser"), "should contain user label");
 }
 
 // ---------------------------------------------------------------------------

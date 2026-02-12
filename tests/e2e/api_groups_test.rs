@@ -142,7 +142,10 @@ async fn test_groups_list_with_groups() {
         .iter()
         .map(|m| m["username"].as_str().unwrap())
         .collect();
-    assert!(admin_names.contains(&"alice"), "admins should contain alice");
+    assert!(
+        admin_names.contains(&"alice"),
+        "admins should contain alice"
+    );
     assert!(admin_names.contains(&"bob"), "admins should contain bob");
 
     let devs = &groups[1];
@@ -211,10 +214,7 @@ async fn test_groups_detail_not_found() {
     let body: serde_json::Value = resp.json().await.unwrap();
     assert_eq!(body["success"], false);
     assert!(
-        body["error"]
-            .as_str()
-            .unwrap()
-            .contains("not found"),
+        body["error"].as_str().unwrap().contains("not found"),
         "error message should mention not found"
     );
 }

@@ -9,63 +9,79 @@ use tokio::net::TcpStream;
 use tracing::{debug, info, info_span, warn, Instrument};
 
 /// Handle a single SOCKS5 connection
-pub async fn handle_connection(
-    mut stream: TcpStream,
-    ctx: Arc<AppContext>,
-) -> Result<()> {
+pub async fn handle_connection(mut stream: TcpStream, ctx: Arc<AppContext>) -> Result<()> {
     let peer_addr = stream.peer_addr()?;
     let conn_id = generate_correlation_id();
     let span = info_span!("socks5", conn_id = %conn_id, peer = %peer_addr.ip());
     async {
-    debug!(conn_id = %conn_id, peer = %peer_addr, "New SOCKS5 connection");
-    ctx.audit.log_connection_new_cid(&peer_addr, "socks5", &conn_id);
+        debug!(conn_id = %conn_id, peer = %peer_addr, "New SOCKS5 connection");
+        ctx.audit
+            .log_connection_new_cid(&peer_addr, "socks5", &conn_id);
 
-    // H-7: Timeout only covers handshake phase, not relay
-    let handshake_timeout = socks5_handshake_timeout(&ctx.config);
-    let handshake_result = tokio::time::timeout(
-        handshake_timeout,
-        socks5_handshake(&mut stream, &ctx, &peer_addr, &conn_id),
-    )
-    .await;
+        // H-7: Timeout only covers handshake phase, not relay
+        let handshake_timeout = socks5_handshake_timeout(&ctx.config);
+        let handshake_result = tokio::time::timeout(
+            handshake_timeout,
+            socks5_handshake(&mut stream, &ctx, &peer_addr, &conn_id),
+        )
+        .await;
 
-    match handshake_result {
-        Ok(Ok(Some(relay_info))) => {
-            // Register session for tracking
-            let session = ctx.proxy_engine.register_session(
-                &relay_info.username,
-                &relay_info.host,
-                relay_info.port,
-                &peer_addr.ip().to_string(),
-                "socks5",
-            );
-            // Relay phase - uses its own idle timeout, no handshake timeout
-            let relay_cfg = relay_info.to_relay_config(ctx.config.limits.idle_timeout, ctx.quota_tracker.clone(), Some(ctx.audit.clone()), Some(session.clone()));
-            let rlog = relay_info.log_info();
-            let relay_start = Instant::now();
-            let (bytes_up, bytes_down) =
-                crate::proxy::forwarder::relay(stream, relay_info.target_stream, relay_cfg)
-                    .await?;
-            let duration_ms = relay_start.elapsed().as_millis() as u64;
+        match handshake_result {
+            Ok(Ok(Some(relay_info))) => {
+                // Register session for tracking
+                let session = ctx.proxy_engine.register_session(
+                    &relay_info.username,
+                    &relay_info.host,
+                    relay_info.port,
+                    &peer_addr.ip().to_string(),
+                    "socks5",
+                );
+                // Relay phase - uses its own idle timeout, no handshake timeout
+                let relay_cfg = relay_info.to_relay_config(
+                    ctx.config.limits.idle_timeout,
+                    ctx.quota_tracker.clone(),
+                    Some(ctx.audit.clone()),
+                    Some(session.clone()),
+                );
+                let rlog = relay_info.log_info();
+                let relay_start = Instant::now();
+                let (bytes_up, bytes_down) =
+                    crate::proxy::forwarder::relay(stream, relay_info.target_stream, relay_cfg)
+                        .await?;
+                let duration_ms = relay_start.elapsed().as_millis() as u64;
 
-            // Unregister session after relay completes
-            ctx.proxy_engine.unregister_session(&session.session_id);
+                // Unregister session after relay completes
+                ctx.proxy_engine.unregister_session(&session.session_id);
 
-            log_relay_complete(&rlog, bytes_up, bytes_down, duration_ms, &peer_addr, &ctx, "SOCKS5", &conn_id).await;
+                log_relay_complete(
+                    &rlog,
+                    bytes_up,
+                    bytes_down,
+                    duration_ms,
+                    &peer_addr,
+                    &ctx,
+                    "SOCKS5",
+                    &conn_id,
+                )
+                .await;
+            }
+            Ok(Ok(None)) => {
+                // Handshake completed but no relay needed (auth failure, rejection, etc.)
+            }
+            Ok(Err(e)) => {
+                return Err(e);
+            }
+            Err(_) => {
+                warn!(conn_id = %conn_id, peer = %peer_addr, "SOCKS5 handshake timeout");
+            }
         }
-        Ok(Ok(None)) => {
-            // Handshake completed but no relay needed (auth failure, rejection, etc.)
-        }
-        Ok(Err(e)) => {
-            return Err(e);
-        }
-        Err(_) => {
-            warn!(conn_id = %conn_id, peer = %peer_addr, "SOCKS5 handshake timeout");
-        }
+
+        ctx.audit
+            .log_connection_closed_cid(&peer_addr, "socks5", &conn_id);
+        Ok(())
     }
-
-    ctx.audit.log_connection_closed_cid(&peer_addr, "socks5", &conn_id);
-    Ok(())
-    }.instrument(span).await
+    .instrument(span)
+    .await
 }
 
 struct RelayInfo {
@@ -81,7 +97,13 @@ struct RelayInfo {
 }
 
 impl RelayInfo {
-    fn to_relay_config(&self, idle_timeout_secs: u64, qt: Arc<crate::quota::QuotaTracker>, audit: Option<Arc<crate::audit::AuditLogger>>, session: Option<std::sync::Arc<crate::proxy::LiveSession>>) -> crate::proxy::forwarder::RelayConfig {
+    fn to_relay_config(
+        &self,
+        idle_timeout_secs: u64,
+        qt: Arc<crate::quota::QuotaTracker>,
+        audit: Option<Arc<crate::audit::AuditLogger>>,
+        session: Option<std::sync::Arc<crate::proxy::LiveSession>>,
+    ) -> crate::proxy::forwarder::RelayConfig {
         crate::proxy::forwarder::RelayConfig {
             idle_timeout: Duration::from_secs(idle_timeout_secs),
             context: format!("{}@{}:{}", self.username, self.host, self.port),
@@ -150,8 +172,13 @@ async fn log_relay_complete(
             conn_id,
         )
         .await;
-    ctx.metrics.record_bytes_transferred(&info.username, bytes_up + bytes_down);
-    ctx.metrics.record_typed_connection_duration(&info.username, "socks5", duration_ms as f64 / 1000.0);
+    ctx.metrics
+        .record_bytes_transferred(&info.username, bytes_up + bytes_down);
+    ctx.metrics.record_typed_connection_duration(
+        &info.username,
+        "socks5",
+        duration_ms as f64 / 1000.0,
+    );
 }
 
 /// P3-1: Handle a TLS-wrapped SOCKS5 connection.
@@ -165,54 +192,72 @@ pub async fn handle_tls_connection(
     let conn_id = generate_correlation_id();
     let span = info_span!("socks5-tls", conn_id = %conn_id, peer = %peer_addr.ip());
     async {
-    debug!(conn_id = %conn_id, peer = %peer_addr, "New SOCKS5 TLS connection");
-    ctx.audit.log_connection_new_cid(&peer_addr, "socks5-tls", &conn_id);
+        debug!(conn_id = %conn_id, peer = %peer_addr, "New SOCKS5 TLS connection");
+        ctx.audit
+            .log_connection_new_cid(&peer_addr, "socks5-tls", &conn_id);
 
-    let handshake_timeout = socks5_handshake_timeout(&ctx.config);
+        let handshake_timeout = socks5_handshake_timeout(&ctx.config);
 
-    // Split TLS stream for handshake
-    let (read_half, write_half) = tokio::io::split(tls_stream);
-    let mut rw = tokio::io::join(read_half, write_half);
+        // Split TLS stream for handshake
+        let (read_half, write_half) = tokio::io::split(tls_stream);
+        let mut rw = tokio::io::join(read_half, write_half);
 
-    let handshake_result = tokio::time::timeout(
-        handshake_timeout,
-        socks5_handshake(&mut rw, &ctx, &peer_addr, &conn_id),
-    )
-    .await;
+        let handshake_result = tokio::time::timeout(
+            handshake_timeout,
+            socks5_handshake(&mut rw, &ctx, &peer_addr, &conn_id),
+        )
+        .await;
 
-    match handshake_result {
-        Ok(Ok(Some(relay_info))) => {
-            // Register session for tracking
-            let session = ctx.proxy_engine.register_session(
-                &relay_info.username,
-                &relay_info.host,
-                relay_info.port,
-                &peer_addr.ip().to_string(),
-                "socks5-tls",
-            );
-            let relay_cfg = relay_info.to_relay_config(ctx.config.limits.idle_timeout, ctx.quota_tracker.clone(), Some(ctx.audit.clone()), Some(session.clone()));
-            let rlog = relay_info.log_info();
-            let relay_start = Instant::now();
-            let (bytes_up, bytes_down) =
-                crate::proxy::forwarder::relay(rw, relay_info.target_stream, relay_cfg)
-                    .await?;
-            let duration_ms = relay_start.elapsed().as_millis() as u64;
+        match handshake_result {
+            Ok(Ok(Some(relay_info))) => {
+                // Register session for tracking
+                let session = ctx.proxy_engine.register_session(
+                    &relay_info.username,
+                    &relay_info.host,
+                    relay_info.port,
+                    &peer_addr.ip().to_string(),
+                    "socks5-tls",
+                );
+                let relay_cfg = relay_info.to_relay_config(
+                    ctx.config.limits.idle_timeout,
+                    ctx.quota_tracker.clone(),
+                    Some(ctx.audit.clone()),
+                    Some(session.clone()),
+                );
+                let rlog = relay_info.log_info();
+                let relay_start = Instant::now();
+                let (bytes_up, bytes_down) =
+                    crate::proxy::forwarder::relay(rw, relay_info.target_stream, relay_cfg).await?;
+                let duration_ms = relay_start.elapsed().as_millis() as u64;
 
-            // Unregister session after relay completes
-            ctx.proxy_engine.unregister_session(&session.session_id);
+                // Unregister session after relay completes
+                ctx.proxy_engine.unregister_session(&session.session_id);
 
-            log_relay_complete(&rlog, bytes_up, bytes_down, duration_ms, &peer_addr, &ctx, "SOCKS5 TLS", &conn_id).await;
+                log_relay_complete(
+                    &rlog,
+                    bytes_up,
+                    bytes_down,
+                    duration_ms,
+                    &peer_addr,
+                    &ctx,
+                    "SOCKS5 TLS",
+                    &conn_id,
+                )
+                .await;
+            }
+            Ok(Ok(None)) => {}
+            Ok(Err(e)) => return Err(e),
+            Err(_) => {
+                warn!(conn_id = %conn_id, peer = %peer_addr, "SOCKS5 TLS handshake timeout");
+            }
         }
-        Ok(Ok(None)) => {}
-        Ok(Err(e)) => return Err(e),
-        Err(_) => {
-            warn!(conn_id = %conn_id, peer = %peer_addr, "SOCKS5 TLS handshake timeout");
-        }
+
+        ctx.audit
+            .log_connection_closed_cid(&peer_addr, "socks5-tls", &conn_id);
+        Ok(())
     }
-
-    ctx.audit.log_connection_closed_cid(&peer_addr, "socks5-tls", &conn_id);
-    Ok(())
-    }.instrument(span).await
+    .instrument(span)
+    .await
 }
 
 /// Perform SOCKS5 handshake (greeting, auth, CONNECT). Returns relay info if successful.
@@ -250,7 +295,8 @@ async fn socks5_handshake<S: AsyncRead + AsyncWrite + Unpin>(
 
     let creds = socks_auth::read_credentials(stream).await?;
 
-    let totp_required = ctx.config
+    let totp_required = ctx
+        .config
         .security
         .totp_required_for
         .contains(&"socks5".to_string());
@@ -307,23 +353,38 @@ async fn socks5_handshake<S: AsyncRead + AsyncWrite + Unpin>(
             let sec = ctx.security.read().await;
             sec.record_auth_failure(&peer_addr.ip());
         }
-        ctx.audit.log_auth_failure_cid(&creds.username, peer_addr, audit_method, conn_id).await;
+        ctx.audit
+            .log_auth_failure_cid(&creds.username, peer_addr, audit_method, conn_id)
+            .await;
         ctx.metrics.record_auth_failure(metric_method);
-        ctx.metrics.record_error(crate::metrics::error_types::AUTH_FAILURE);
+        ctx.metrics
+            .record_error(crate::metrics::error_types::AUTH_FAILURE);
         ctx.metrics.record_connection_rejected("auth_failed");
         return Ok(None);
     }
 
     socks_auth::send_auth_result(stream, true).await?;
     info!(conn_id = %conn_id, user = %creds.username, ip = %peer_addr, "SOCKS5 auth success");
-    ctx.audit.log_auth_success_cid(&creds.username, peer_addr, "socks5", conn_id).await;
-    let socks5_method = if totp_required && totp_code.is_some() { "password+totp" } else { "password" };
-    ctx.audit.log_session_authenticated_cid(&creds.username, peer_addr, "socks5", socks5_method, conn_id);
-    ctx.metrics.record_auth_success(&creds.username, socks5_method);
+    ctx.audit
+        .log_auth_success_cid(&creds.username, peer_addr, "socks5", conn_id)
+        .await;
+    let socks5_method = if totp_required && totp_code.is_some() {
+        "password+totp"
+    } else {
+        "password"
+    };
+    ctx.audit.log_session_authenticated_cid(
+        &creds.username,
+        peer_addr,
+        "socks5",
+        socks5_method,
+        conn_id,
+    );
+    ctx.metrics
+        .record_auth_success(&creds.username, socks5_method);
 
     // User was already fetched in Phase 2 auth read — no additional lock acquisition
-    let user = user_opt
-        .ok_or_else(|| anyhow::anyhow!("user disappeared after auth"))?;
+    let user = user_opt.ok_or_else(|| anyhow::anyhow!("user disappeared after auth"))?;
 
     if !user.is_source_ip_allowed(&peer_addr.ip()) {
         warn!(conn_id = %conn_id, user = %creds.username, ip = %peer_addr.ip(), "SOCKS5 connection from IP not in user's allowed source_ips");
@@ -338,9 +399,19 @@ async fn socks5_handshake<S: AsyncRead + AsyncWrite + Unpin>(
     }
 
     // Post-auth rate limit check (security read)
-    if !ctx.security.read().await.check_rate_limit(&creds.username, user.max_new_connections_per_minute) {
+    if !ctx
+        .security
+        .read()
+        .await
+        .check_rate_limit(&creds.username, user.max_new_connections_per_minute)
+    {
         warn!(conn_id = %conn_id, user = %creds.username, limit = user.max_new_connections_per_minute, "SOCKS5 rate limit exceeded (legacy)");
-        ctx.audit.log_rate_limit_exceeded_cid(&creds.username, peer_addr, "legacy_per_minute", conn_id);
+        ctx.audit.log_rate_limit_exceeded_cid(
+            &creds.username,
+            peer_addr,
+            "legacy_per_minute",
+            conn_id,
+        );
         ctx.metrics.record_connection_rejected("rate_limited");
         return Ok(None);
     }
@@ -352,18 +423,20 @@ async fn socks5_handshake<S: AsyncRead + AsyncWrite + Unpin>(
         &ctx.config.limits,
     ) {
         warn!(conn_id = %conn_id, user = %creds.username, reason = %reason, "SOCKS5 quota rate limit exceeded");
-        ctx.audit.log_rate_limit_exceeded_cid(&creds.username, peer_addr, &reason, conn_id);
+        ctx.audit
+            .log_rate_limit_exceeded_cid(&creds.username, peer_addr, &reason, conn_id);
         ctx.metrics.record_connection_rejected("rate_limited");
         return Ok(None);
     }
 
     // Record connection in quota tracker (checks daily/monthly quotas)
-    if let Err(reason) = ctx.quota_tracker.record_connection(
-        &creds.username,
-        user.quotas.as_ref(),
-    ) {
+    if let Err(reason) = ctx
+        .quota_tracker
+        .record_connection(&creds.username, user.quotas.as_ref())
+    {
         warn!(conn_id = %conn_id, user = %creds.username, reason = %reason, "SOCKS5 connection quota exceeded");
-        ctx.metrics.record_error(crate::metrics::error_types::QUOTA_EXCEEDED);
+        ctx.metrics
+            .record_error(crate::metrics::error_types::QUOTA_EXCEEDED);
         ctx.metrics.record_connection_rejected("quota_exceeded");
         return Ok(None);
     }
@@ -381,11 +454,26 @@ async fn socks5_handshake<S: AsyncRead + AsyncWrite + Unpin>(
 
     let source_ip_str = peer_addr.ip().to_string();
 
-    match ctx.proxy_engine.connect_for_socks(&creds.username, &host, port, &user.acl, &source_ip_str, user.max_connections).await {
+    match ctx
+        .proxy_engine
+        .connect_for_socks(
+            &creds.username,
+            &host,
+            port,
+            &user.acl,
+            &source_ip_str,
+            user.max_connections,
+        )
+        .await
+    {
         Ok((target_stream, resolved_addr, guard)) => {
             let bind_addr = match resolved_addr {
-                std::net::SocketAddr::V4(a) => protocol::TargetAddr::Ipv4(a.ip().octets(), a.port()),
-                std::net::SocketAddr::V6(a) => protocol::TargetAddr::Ipv6(a.ip().octets(), a.port()),
+                std::net::SocketAddr::V4(a) => {
+                    protocol::TargetAddr::Ipv4(a.ip().octets(), a.port())
+                }
+                std::net::SocketAddr::V6(a) => {
+                    protocol::TargetAddr::Ipv6(a.ip().octets(), a.port())
+                }
             };
             protocol::send_reply(stream, protocol::REPLY_SUCCESS, &bind_addr).await?;
 
@@ -406,7 +494,8 @@ async fn socks5_handshake<S: AsyncRead + AsyncWrite + Unpin>(
             warn!(conn_id = %conn_id, user = %creds.username, target = %format!("{}:{}", host, port), error = %e, error_type = %error_type, "SOCKS5 connect failed");
             ctx.metrics.record_error(error_type);
             let reply_code = classify_error_reply(&e);
-            protocol::send_reply(stream, reply_code, &protocol::TargetAddr::Ipv4([0; 4], 0)).await?;
+            protocol::send_reply(stream, reply_code, &protocol::TargetAddr::Ipv4([0; 4], 0))
+                .await?;
             Ok(None)
         }
     }
@@ -428,8 +517,9 @@ fn classify_connect_error(err: &anyhow::Error) -> &'static str {
     } else if let Some(io_err) = err.downcast_ref::<std::io::Error>() {
         match io_err.kind() {
             std::io::ErrorKind::ConnectionRefused => error_types::CONNECTION_REFUSED,
-            std::io::ErrorKind::ConnectionReset
-            | std::io::ErrorKind::ConnectionAborted => error_types::RELAY_ERROR,
+            std::io::ErrorKind::ConnectionReset | std::io::ErrorKind::ConnectionAborted => {
+                error_types::RELAY_ERROR
+            }
             std::io::ErrorKind::TimedOut => error_types::CONNECTION_TIMEOUT,
             _ => error_types::RELAY_ERROR,
         }

@@ -92,12 +92,10 @@ fn validate_config(config: &AppConfig) -> Result<()> {
 
 fn validate_global_acl(config: &AppConfig) -> Result<()> {
     for rule in &config.acl.allow {
-        acl::AclRule::parse(rule)
-            .with_context(|| format!("global ACL allow rule: {rule}"))?;
+        acl::AclRule::parse(rule).with_context(|| format!("global ACL allow rule: {rule}"))?;
     }
     for rule in &config.acl.deny {
-        acl::AclRule::parse(rule)
-            .with_context(|| format!("global ACL deny rule: {rule}"))?;
+        acl::AclRule::parse(rule).with_context(|| format!("global ACL deny rule: {rule}"))?;
     }
 
     // Warn operators about permissive default ACL policy
@@ -173,7 +171,10 @@ fn validate_api(config: &AppConfig) -> Result<()> {
         anyhow::bail!("api.token must be set when api is enabled");
     }
     if config.api.enabled && !config.api.token.is_empty() && config.api.token.len() < 16 {
-        anyhow::bail!("API token is too short ({} chars, minimum 16)", config.api.token.len());
+        anyhow::bail!(
+            "API token is too short ({} chars, minimum 16)",
+            config.api.token.len()
+        );
     }
     Ok(())
 }
@@ -185,7 +186,11 @@ fn validate_webhooks(config: &AppConfig) -> Result<()> {
 
         let scheme = parsed.scheme();
         if scheme != "http" && scheme != "https" {
-            anyhow::bail!("webhook[{}] URL must use http or https scheme: {}", i, webhook.url);
+            anyhow::bail!(
+                "webhook[{}] URL must use http or https scheme: {}",
+                i,
+                webhook.url
+            );
         }
 
         // P0-1: Check for private/internal IPs unless allow_private_ips is set
@@ -201,8 +206,8 @@ fn validate_webhooks(config: &AppConfig) -> Result<()> {
                 // Check if host is a direct IP address
                 if let Ok(ip) = host.parse::<std::net::IpAddr>() {
                     if crate::proxy::ip_guard::is_dangerous_ip(&ip) {
-                        let range = crate::proxy::ip_guard::classify_dangerous_ip(&ip)
-                            .unwrap_or("private");
+                        let range =
+                            crate::proxy::ip_guard::classify_dangerous_ip(&ip).unwrap_or("private");
                         anyhow::bail!(
                             "webhook[{}] URL points to {} IP {} (set allow_private_ips=true to override): {}",
                             i, range, ip, webhook.url
@@ -232,10 +237,16 @@ fn validate_webhooks(config: &AppConfig) -> Result<()> {
 fn validate_socks5_handshake_timeout(config: &AppConfig) -> Result<()> {
     let timeout = config.limits.socks5_handshake_timeout;
     if timeout < 5 {
-        anyhow::bail!("limits.socks5_handshake_timeout must be >= 5 (got {})", timeout);
+        anyhow::bail!(
+            "limits.socks5_handshake_timeout must be >= 5 (got {})",
+            timeout
+        );
     }
     if timeout > 120 {
-        anyhow::bail!("limits.socks5_handshake_timeout must be <= 120 (got {})", timeout);
+        anyhow::bail!(
+            "limits.socks5_handshake_timeout must be <= 120 (got {})",
+            timeout
+        );
     }
     Ok(())
 }

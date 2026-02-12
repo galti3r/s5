@@ -73,14 +73,7 @@ pub fn execute(
                 }
                 // Recursively execute the expanded command (no further alias expansion
                 // to prevent infinite loops)
-                return execute_inner(
-                    &alias_cmd,
-                    &alias_tokens,
-                    fs,
-                    username,
-                    hostname,
-                    ctx,
-                );
+                return execute_inner(&alias_cmd, &alias_tokens, fs, username, hostname, ctx);
             }
         }
     }

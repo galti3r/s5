@@ -81,7 +81,9 @@ async fn test_sftp_subsystem_rejected() {
     let mut stream = channel.into_stream();
 
     // Try to send SFTP init packet
-    let _ = tokio::io::AsyncWriteExt::write_all(&mut stream, b"\x00\x00\x00\x05\x01\x00\x00\x00\x03").await;
+    let _ =
+        tokio::io::AsyncWriteExt::write_all(&mut stream, b"\x00\x00\x00\x05\x01\x00\x00\x00\x03")
+            .await;
 
     let mut buf = vec![0u8; 1024];
     let result = tokio::time::timeout(
@@ -96,7 +98,7 @@ async fn test_sftp_subsystem_rejected() {
         // (server shell would say "command not found" or similar)
         let output = String::from_utf8_lossy(&buf[..n]);
         assert!(
-            !output.contains("\x02"),  // SSH_FXP_VERSION = 0x02
+            !output.contains("\x02"), // SSH_FXP_VERSION = 0x02
             "should not get valid SFTP response"
         );
     }
@@ -130,10 +132,7 @@ async fn test_ssh_reverse_forward_rejected() {
     // Request reverse forwarding - should return false/fail
     let result = handle.tcpip_forward("127.0.0.1", 0).await;
     // tcpip_forward returns false -> client gets RequestFailure
-    assert!(
-        result.is_err(),
-        "Reverse forwarding should be rejected"
-    );
+    assert!(result.is_err(), "Reverse forwarding should be rejected");
 }
 
 // ---------------------------------------------------------------------------

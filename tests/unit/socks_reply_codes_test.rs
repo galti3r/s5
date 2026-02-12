@@ -70,7 +70,7 @@ async fn send_reply_domain_format() {
         .unwrap();
 
     assert_eq!(buf[3], 0x03); // domain
-    assert_eq!(buf[4], 11);   // "example.com".len()
+    assert_eq!(buf[4], 11); // "example.com".len()
     assert_eq!(&buf[5..16], b"example.com");
 }
 

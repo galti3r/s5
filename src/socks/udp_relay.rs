@@ -31,10 +31,7 @@ pub struct UdpRelaySession {
 impl UdpRelaySession {
     /// Create a new UDP relay session.
     /// Binds a UDP socket on the same IP as the TCP listener.
-    pub async fn new(
-        bind_ip: std::net::IpAddr,
-        client_addr: SocketAddr,
-    ) -> Result<Self> {
+    pub async fn new(bind_ip: std::net::IpAddr, client_addr: SocketAddr) -> Result<Self> {
         // Bind on port 0 to get an ephemeral port
         let bind_addr = SocketAddr::new(bind_ip, 0);
         let socket = UdpSocket::bind(bind_addr).await?;
@@ -103,23 +100,37 @@ impl UdpRelaySession {
                                 let remote_port = header.target.port();
 
                                 // S-3: Validate domain names in UDP datagrams before DNS resolution
-                                if let crate::socks::protocol::TargetAddr::Domain(ref domain, _) = header.target {
-                                    if let Err(reason) = crate::socks::protocol::validate_domain(domain) {
+                                if let crate::socks::protocol::TargetAddr::Domain(ref domain, _) =
+                                    header.target
+                                {
+                                    if let Err(reason) =
+                                        crate::socks::protocol::validate_domain(domain)
+                                    {
                                         warn!(user = %username, domain = %domain, reason = %reason, "UDP relay rejected: invalid domain");
                                         continue;
                                     }
                                 }
 
                                 // Resolve and forward
-                                match tokio::net::lookup_host(format!("{}:{}", remote_host, remote_port)).await {
+                                match tokio::net::lookup_host(format!(
+                                    "{}:{}",
+                                    remote_host, remote_port
+                                ))
+                                .await
+                                {
                                     Ok(mut addrs) => {
                                         if let Some(remote_addr) = addrs.next() {
-                                            if let Err(e) = socket.send_to(payload, remote_addr).await {
+                                            if let Err(e) =
+                                                socket.send_to(payload, remote_addr).await
+                                            {
                                                 warn!(user = %username, error = %e, "UDP relay send to remote failed");
                                             } else {
                                                 last_remote = Some(remote_addr);
                                                 if let Some(ref m) = metrics {
-                                                    m.record_bytes_transferred(&username, payload.len() as u64);
+                                                    m.record_bytes_transferred(
+                                                        &username,
+                                                        payload.len() as u64,
+                                                    );
                                                 }
                                             }
                                         }

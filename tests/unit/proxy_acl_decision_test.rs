@@ -13,12 +13,8 @@ use s5::proxy::acl::{check_and_log, pre_check_hostname_and_log};
 
 #[test]
 fn precheck_denies_hostname_deny_rule() {
-    let acl = ParsedAcl::from_config(
-        AclPolicyConfig::Allow,
-        &[],
-        &["evil.com:*".to_string()],
-    )
-    .unwrap();
+    let acl =
+        ParsedAcl::from_config(AclPolicyConfig::Allow, &[], &["evil.com:*".to_string()]).unwrap();
 
     let decision = pre_check_hostname_and_log(&acl, "alice", "evil.com", 80);
     assert!(!decision.allowed);
@@ -43,12 +39,8 @@ fn precheck_allows_when_no_deny_matches() {
 fn precheck_allows_on_defer_for_cidr_only_rules() {
     // When only CIDR deny rules exist and host is a domain name,
     // the pre-check should return allowed=true (defer means proceed to DNS)
-    let acl = ParsedAcl::from_config(
-        AclPolicyConfig::Allow,
-        &[],
-        &["10.0.0.0/8:*".to_string()],
-    )
-    .unwrap();
+    let acl =
+        ParsedAcl::from_config(AclPolicyConfig::Allow, &[], &["10.0.0.0/8:*".to_string()]).unwrap();
 
     let decision = pre_check_hostname_and_log(&acl, "alice", "example.com", 80);
     assert!(decision.allowed);
@@ -56,12 +48,8 @@ fn precheck_allows_on_defer_for_cidr_only_rules() {
 
 #[test]
 fn precheck_denies_literal_ip_matching_cidr() {
-    let acl = ParsedAcl::from_config(
-        AclPolicyConfig::Allow,
-        &[],
-        &["10.0.0.0/8:*".to_string()],
-    )
-    .unwrap();
+    let acl =
+        ParsedAcl::from_config(AclPolicyConfig::Allow, &[], &["10.0.0.0/8:*".to_string()]).unwrap();
 
     // Literal IP string that matches CIDR should be denied at pre-check
     let decision = pre_check_hostname_and_log(&acl, "alice", "10.1.2.3", 80);
@@ -70,12 +58,8 @@ fn precheck_denies_literal_ip_matching_cidr() {
 
 #[test]
 fn precheck_returns_matched_rule_for_allow() {
-    let acl = ParsedAcl::from_config(
-        AclPolicyConfig::Deny,
-        &["safe.com:443".to_string()],
-        &[],
-    )
-    .unwrap();
+    let acl =
+        ParsedAcl::from_config(AclPolicyConfig::Deny, &["safe.com:443".to_string()], &[]).unwrap();
 
     let decision = pre_check_hostname_and_log(&acl, "alice", "safe.com", 443);
     assert!(decision.allowed);
@@ -114,12 +98,8 @@ fn postcheck_allows_public_ip_with_allow_default() {
 
 #[test]
 fn postcheck_denies_matching_cidr_deny_rule() {
-    let acl = ParsedAcl::from_config(
-        AclPolicyConfig::Allow,
-        &[],
-        &["10.0.0.0/8:*".to_string()],
-    )
-    .unwrap();
+    let acl =
+        ParsedAcl::from_config(AclPolicyConfig::Allow, &[], &["10.0.0.0/8:*".to_string()]).unwrap();
 
     let decision = check_and_log(
         &acl,
@@ -162,12 +142,8 @@ fn postcheck_deny_wins_over_allow_for_same_target() {
 
 #[test]
 fn postcheck_with_none_resolved_ip_uses_hostname_matching() {
-    let acl = ParsedAcl::from_config(
-        AclPolicyConfig::Deny,
-        &["good.com:443".to_string()],
-        &[],
-    )
-    .unwrap();
+    let acl =
+        ParsedAcl::from_config(AclPolicyConfig::Deny, &["good.com:443".to_string()], &[]).unwrap();
 
     // No resolved IP provided -- hostname matching only
     let decision = check_and_log(&acl, "alice", "good.com", 443, None);
@@ -190,12 +166,8 @@ fn postcheck_cidr_rule_does_not_match_unresolved_hostname() {
 
 #[test]
 fn postcheck_port_specific_deny_only_blocks_that_port() {
-    let acl = ParsedAcl::from_config(
-        AclPolicyConfig::Allow,
-        &[],
-        &["evil.com:22".to_string()],
-    )
-    .unwrap();
+    let acl =
+        ParsedAcl::from_config(AclPolicyConfig::Allow, &[], &["evil.com:22".to_string()]).unwrap();
 
     let decision_22 = check_and_log(&acl, "alice", "evil.com", 22, None);
     assert!(!decision_22.allowed);
@@ -206,12 +178,8 @@ fn postcheck_port_specific_deny_only_blocks_that_port() {
 
 #[test]
 fn postcheck_ipv6_resolved_address_matches_cidr() {
-    let acl = ParsedAcl::from_config(
-        AclPolicyConfig::Allow,
-        &[],
-        &["fc00::/7:*".to_string()],
-    )
-    .unwrap();
+    let acl =
+        ParsedAcl::from_config(AclPolicyConfig::Allow, &[], &["fc00::/7:*".to_string()]).unwrap();
 
     // IPv6 ULA address should match fc00::/7
     let decision = check_and_log(

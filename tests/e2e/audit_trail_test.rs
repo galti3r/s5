@@ -53,10 +53,7 @@ struct TestServer {
     port: u16,
 }
 
-async fn start_socks5_with_audit(
-    config: AppConfig,
-    audit_path: std::path::PathBuf,
-) -> TestServer {
+async fn start_socks5_with_audit(config: AppConfig, audit_path: std::path::PathBuf) -> TestServer {
     let socks_addr = config.server.socks5_listen.clone().unwrap();
     let port: u16 = socks_addr.split(':').next_back().unwrap().parse().unwrap();
     let config = Arc::new(config);

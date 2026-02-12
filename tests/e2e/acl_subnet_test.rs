@@ -16,13 +16,7 @@ async fn test_acl_subnet_allow() {
     let (echo_port, _echo_task) = tcp_echo_server().await;
 
     // Allow 127.0.0.0/8:* (covers 127.0.0.1)
-    let config = acl_config(
-        ssh_port,
-        &hash,
-        &["127.0.0.0/8:*"],
-        &[],
-        "deny",
-    );
+    let config = acl_config(ssh_port, &hash, &["127.0.0.0/8:*"], &[], "deny");
     let _server = start_ssh(config).await;
 
     let client_config = Arc::new(russh::client::Config::default());
@@ -67,13 +61,7 @@ async fn test_acl_subnet_deny() {
     let (echo_port, _echo_task) = tcp_echo_server().await;
 
     // Deny 127.0.0.0/8:* (covers 127.0.0.1), default allow
-    let config = acl_config(
-        ssh_port,
-        &hash,
-        &[],
-        &["127.0.0.0/8:*"],
-        "allow",
-    );
+    let config = acl_config(ssh_port, &hash, &[], &["127.0.0.0/8:*"], "allow");
     let _server = start_ssh(config).await;
 
     let client_config = Arc::new(russh::client::Config::default());

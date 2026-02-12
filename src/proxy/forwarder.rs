@@ -78,13 +78,22 @@ async fn relay_one_direction<R: AsyncRead + Unpin, W: AsyncWrite + Unpin>(
                     }
                 }
 
-                let delay = if let (Some(qt), Some(cached_state)) = (&params.quota_tracker, &params.cached_user_state) {
-                    match qt.record_bytes_cached(cached_state, n as u64, params.per_conn_bw, params.agg_bw, params.quotas.as_deref()) {
+                let delay = if let (Some(qt), Some(cached_state)) =
+                    (&params.quota_tracker, &params.cached_user_state)
+                {
+                    match qt.record_bytes_cached(
+                        cached_state,
+                        n as u64,
+                        params.per_conn_bw,
+                        params.agg_bw,
+                        params.quotas.as_deref(),
+                    ) {
                         crate::quota::QuotaResult::Ok(d) => d,
                         crate::quota::QuotaResult::Exceeded(reason) => {
                             debug!(context = %params.context, reason = %reason, direction = params.direction, "Quota exceeded, terminating relay");
-                            if let (Some(ref audit), Some(ref username)) = (&params.audit, &params.username) {
-
+                            if let (Some(ref audit), Some(ref username)) =
+                                (&params.audit, &params.username)
+                            {
                                 audit.log_quota_exceeded(username, &reason, 0, 0);
                             }
                             break;
@@ -118,11 +127,7 @@ async fn relay_one_direction<R: AsyncRead + Unpin, W: AsyncWrite + Unpin>(
 
 /// Bidirectional relay between two streams with idle timeout, bandwidth throttling, and quota enforcement.
 /// Returns (bytes_uploaded, bytes_downloaded) — upload = A→B, download = B→A.
-pub async fn relay<A, B>(
-    stream_a: A,
-    stream_b: B,
-    config: RelayConfig,
-) -> Result<(u64, u64)>
+pub async fn relay<A, B>(stream_a: A, stream_b: B, config: RelayConfig) -> Result<(u64, u64)>
 where
     A: AsyncRead + AsyncWrite + Unpin + Send + 'static,
     B: AsyncRead + AsyncWrite + Unpin + Send + 'static,

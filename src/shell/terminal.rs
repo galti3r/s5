@@ -2,27 +2,8 @@ const MAX_LINE_LENGTH: usize = 4096;
 
 /// Known commands for tab completion
 const COMPLETABLE_COMMANDS: &[&str] = &[
-    "alias",
-    "bookmark",
-    "cat",
-    "cd",
-    "clear",
-    "echo",
-    "env",
-    "exit",
-    "help",
-    "hostname",
-    "id",
-    "logout",
-    "ls",
-    "ping",
-    "printenv",
-    "pwd",
-    "resolve",
-    "show",
-    "test",
-    "uname",
-    "whoami",
+    "alias", "bookmark", "cat", "cd", "clear", "echo", "env", "exit", "help", "hostname", "id",
+    "logout", "ls", "ping", "printenv", "pwd", "resolve", "show", "test", "uname", "whoami",
 ];
 
 /// Known show subcommands for tab completion
@@ -138,9 +119,7 @@ impl TerminalState {
             b'\r' | b'\n' => {
                 let line = String::from_utf8_lossy(&self.line_buffer).to_string();
                 // Add non-empty, non-duplicate lines to history
-                if !line.trim().is_empty()
-                    && self.history.last() != Some(&line)
-                {
+                if !line.trim().is_empty() && self.history.last() != Some(&line) {
                     self.history.push(line.clone());
                     if self.history.len() > MAX_HISTORY {
                         self.history.remove(0);
@@ -280,7 +259,8 @@ impl TerminalState {
             Some(i) => {
                 let new_index = i + 1;
                 self.history_index = Some(new_index);
-                let echo = self.replace_line(self.history[new_index].as_bytes().to_vec().as_slice());
+                let echo =
+                    self.replace_line(self.history[new_index].as_bytes().to_vec().as_slice());
                 (echo, None)
             }
         }
@@ -492,7 +472,11 @@ mod tests {
         // Should complete to "whoami "
         assert!(line.is_none());
         let echo_str = String::from_utf8_lossy(&echo);
-        assert!(echo_str.contains("ami "), "Expected 'ami ' completion, got: {:?}", echo_str);
+        assert!(
+            echo_str.contains("ami "),
+            "Expected 'ami ' completion, got: {:?}",
+            echo_str
+        );
     }
 
     #[test]
@@ -505,7 +489,11 @@ mod tests {
         let (echo, line) = term.process_byte(b'\t');
         assert!(line.is_none());
         let echo_str = String::from_utf8_lossy(&echo);
-        assert!(echo_str.contains("atus "), "Expected 'atus ' completion, got: {:?}", echo_str);
+        assert!(
+            echo_str.contains("atus "),
+            "Expected 'atus ' completion, got: {:?}",
+            echo_str
+        );
     }
 
     #[test]
@@ -535,10 +523,7 @@ mod tests {
             common_prefix(&["show".to_string(), "shell".to_string()]),
             "sh"
         );
-        assert_eq!(
-            common_prefix(&["test".to_string()]),
-            "test"
-        );
+        assert_eq!(common_prefix(&["test".to_string()]), "test");
         assert_eq!(common_prefix(&[]), "");
     }
 

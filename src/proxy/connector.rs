@@ -22,14 +22,12 @@ pub async fn resolve_and_check(
     };
 
     let dns_timeout = std::time::Duration::from_secs(timeout_secs.min(30));
-    let addrs: Vec<SocketAddr> = tokio::time::timeout(
-        dns_timeout,
-        tokio::net::lookup_host(&addr_str),
-    )
-    .await
-    .context("DNS lookup timeout")?
-    .with_context(|| format!("DNS lookup failed for {}", addr_str))?
-    .collect();
+    let addrs: Vec<SocketAddr> =
+        tokio::time::timeout(dns_timeout, tokio::net::lookup_host(&addr_str))
+            .await
+            .context("DNS lookup timeout")?
+            .with_context(|| format!("DNS lookup failed for {}", addr_str))?
+            .collect();
 
     if addrs.is_empty() {
         anyhow::bail!("no addresses found for {}", addr_str);
@@ -57,7 +55,10 @@ pub async fn resolve_and_check(
         .collect();
 
     if safe_addrs.is_empty() {
-        anyhow::bail!("all resolved addresses for {} are blocked by ip_guard", host);
+        anyhow::bail!(
+            "all resolved addresses for {} are blocked by ip_guard",
+            host
+        );
     }
 
     Ok(safe_addrs)

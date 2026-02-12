@@ -32,10 +32,7 @@ pub struct SshHandler {
 }
 
 impl SshHandler {
-    pub fn new(
-        ctx: Arc<AppContext>,
-        peer_addr: std::net::SocketAddr,
-    ) -> Self {
+    pub fn new(ctx: Arc<AppContext>, peer_addr: std::net::SocketAddr) -> Self {
         let conn_id = generate_correlation_id();
         Self {
             ctx,
@@ -107,7 +104,9 @@ impl SshHandler {
                 port = port_to_connect,
                 "Forwarding denied: outside allowed access hours/days"
             );
-            self.ctx.metrics.record_connection_rejected("time_access_denied");
+            self.ctx
+                .metrics
+                .record_connection_rejected("time_access_denied");
             return Ok(None);
         }
 
@@ -124,7 +123,12 @@ impl SshHandler {
                 limit = user.max_new_connections_per_minute,
                 "SSH direct-tcpip rate limit exceeded (legacy)"
             );
-            self.ctx.audit.log_rate_limit_exceeded_cid(&username, &self.peer_addr, "legacy_per_minute", &self.conn_id);
+            self.ctx.audit.log_rate_limit_exceeded_cid(
+                &username,
+                &self.peer_addr,
+                "legacy_per_minute",
+                &self.conn_id,
+            );
             self.ctx.metrics.record_connection_rejected("rate_limited");
             return Ok(None);
         }
@@ -141,24 +145,34 @@ impl SshHandler {
                 reason = %reason,
                 "SSH direct-tcpip quota rate limit exceeded"
             );
-            self.ctx.audit.log_rate_limit_exceeded_cid(&username, &self.peer_addr, &reason, &self.conn_id);
+            self.ctx.audit.log_rate_limit_exceeded_cid(
+                &username,
+                &self.peer_addr,
+                &reason,
+                &self.conn_id,
+            );
             self.ctx.metrics.record_connection_rejected("rate_limited");
             return Ok(None);
         }
 
         // Record connection in quota tracker (checks daily/monthly quotas)
-        if let Err(reason) = self.ctx.quota_tracker.record_connection(
-            &username,
-            user.quotas.as_ref(),
-        ) {
+        if let Err(reason) = self
+            .ctx
+            .quota_tracker
+            .record_connection(&username, user.quotas.as_ref())
+        {
             warn!(
                 conn_id = %self.conn_id,
                 user = %username,
                 reason = %reason,
                 "SSH direct-tcpip connection quota exceeded"
             );
-            self.ctx.metrics.record_error(crate::metrics::error_types::QUOTA_EXCEEDED);
-            self.ctx.metrics.record_connection_rejected("quota_exceeded");
+            self.ctx
+                .metrics
+                .record_error(crate::metrics::error_types::QUOTA_EXCEEDED);
+            self.ctx
+                .metrics
+                .record_connection_rejected("quota_exceeded");
             return Ok(None);
         }
 
@@ -202,9 +216,15 @@ impl SshHandler {
             .audit
             .log_auth_failure_cid(username, &self.peer_addr, method, &self.conn_id)
             .await;
-        let metric_method = if method == "publickey" { "pubkey" } else { method };
+        let metric_method = if method == "publickey" {
+            "pubkey"
+        } else {
+            method
+        };
         self.ctx.metrics.record_auth_failure(metric_method);
-        self.ctx.metrics.record_error(crate::metrics::error_types::AUTH_FAILURE);
+        self.ctx
+            .metrics
+            .record_error(crate::metrics::error_types::AUTH_FAILURE);
         self.ctx.metrics.record_connection_rejected("auth_failed");
         self.ctx
             .security
@@ -219,9 +239,7 @@ impl SshHandler {
         }
 
         russh::server::Auth::Reject {
-            proceed_with_methods: Some(
-                russh::MethodSet::PASSWORD | russh::MethodSet::PUBLICKEY,
-            ),
+            proceed_with_methods: Some(russh::MethodSet::PASSWORD | russh::MethodSet::PUBLICKEY),
         }
     }
 }
@@ -455,9 +473,19 @@ impl russh::server::Handler for SshHandler {
             });
         }
 
-        if let Err(reason) = self.ctx.security.read().await.pre_auth_check(&self.peer_addr.ip()) {
+        if let Err(reason) = self
+            .ctx
+            .security
+            .read()
+            .await
+            .pre_auth_check(&self.peer_addr.ip())
+        {
             warn!(conn_id = %self.conn_id, ip = %self.peer_addr.ip(), reason = %reason, "SSH password auth rejected");
-            let metric_reason = if reason == "banned IP" { "banned" } else { "acl_denied" };
+            let metric_reason = if reason == "banned IP" {
+                "banned"
+            } else {
+                "acl_denied"
+            };
             self.ctx.metrics.record_connection_rejected(metric_reason);
             return Ok(russh::server::Auth::Reject {
                 proceed_with_methods: None,
@@ -486,12 +514,14 @@ impl russh::server::Handler for SshHandler {
 
                 if has_totp {
                     // Secure TOTP extraction with delimiter + suffix support
-                    let (actual_pass, totp_code) = crate::auth::password::extract_totp_from_password(password);
+                    let (actual_pass, totp_code) =
+                        crate::auth::password::extract_totp_from_password(password);
                     let pass_ok = auth.auth_password(user, &actual_pass);
-                    let result = pass_ok && match totp_code {
-                        Some(code) => auth.verify_totp(user, &code),
-                        None => false,
-                    };
+                    let result = pass_ok
+                        && match totp_code {
+                            Some(code) => auth.verify_totp(user, &code),
+                            None => false,
+                        };
                     (result, has_totp)
                 } else {
                     (auth.auth_password(user, password), false)
@@ -514,7 +544,13 @@ impl russh::server::Handler for SshHandler {
                 .audit
                 .log_auth_success_cid(user, &self.peer_addr, "password", &self.conn_id)
                 .await;
-            self.ctx.audit.log_session_authenticated_cid(user, &self.peer_addr, "ssh", &self.session_state.auth_method, &self.conn_id);
+            self.ctx.audit.log_session_authenticated_cid(
+                user,
+                &self.peer_addr,
+                "ssh",
+                &self.session_state.auth_method,
+                &self.conn_id,
+            );
             self.ctx.metrics.record_auth_success(user, "password");
             Ok(russh::server::Auth::Accept)
         } else {
@@ -539,9 +575,19 @@ impl russh::server::Handler for SshHandler {
             });
         }
 
-        if let Err(reason) = self.ctx.security.read().await.pre_auth_check(&self.peer_addr.ip()) {
+        if let Err(reason) = self
+            .ctx
+            .security
+            .read()
+            .await
+            .pre_auth_check(&self.peer_addr.ip())
+        {
             warn!(conn_id = %self.conn_id, ip = %self.peer_addr.ip(), reason = %reason, "SSH pubkey auth rejected");
-            let metric_reason = if reason == "banned IP" { "banned" } else { "acl_denied" };
+            let metric_reason = if reason == "banned IP" {
+                "banned"
+            } else {
+                "acl_denied"
+            };
             self.ctx.metrics.record_connection_rejected(metric_reason);
             return Ok(russh::server::Auth::Reject {
                 proceed_with_methods: None,
@@ -561,9 +607,9 @@ impl russh::server::Handler for SshHandler {
             self.session_state.auth_method = "publickey".to_string();
             // Compute SSH key fingerprint (SHA256 of base64-decoded public key bytes)
             let fingerprint = {
-                use russh_keys::PublicKeyBase64;
-                use sha2::{Sha256, Digest};
                 use base64::Engine;
+                use russh_keys::PublicKeyBase64;
+                use sha2::{Digest, Sha256};
                 let key_b64 = public_key.public_key_base64();
                 let key_bytes = base64::engine::general_purpose::STANDARD
                     .decode(&key_b64)
@@ -577,7 +623,13 @@ impl russh::server::Handler for SshHandler {
                 .audit
                 .log_auth_success_cid(user, &self.peer_addr, "publickey", &self.conn_id)
                 .await;
-            self.ctx.audit.log_session_authenticated_cid(user, &self.peer_addr, "ssh", "publickey", &self.conn_id);
+            self.ctx.audit.log_session_authenticated_cid(
+                user,
+                &self.peer_addr,
+                "ssh",
+                "publickey",
+                &self.conn_id,
+            );
             self.ctx.metrics.record_auth_success(user, "pubkey");
             Ok(russh::server::Auth::Accept)
         } else {
@@ -599,9 +651,19 @@ impl russh::server::Handler for SshHandler {
         }
 
         // P1-1: Pre-auth ban check — reject banned IPs immediately (0 auth attempts)
-        if let Err(reason) = self.ctx.security.read().await.pre_auth_check(&self.peer_addr.ip()) {
+        if let Err(reason) = self
+            .ctx
+            .security
+            .read()
+            .await
+            .pre_auth_check(&self.peer_addr.ip())
+        {
             warn!(conn_id = %self.conn_id, ip = %self.peer_addr.ip(), reason = %reason, "SSH auth_none rejected (pre-auth)");
-            let metric_reason = if reason == "banned IP" { "banned" } else { "acl_denied" };
+            let metric_reason = if reason == "banned IP" {
+                "banned"
+            } else {
+                "acl_denied"
+            };
             self.ctx.metrics.record_connection_rejected(metric_reason);
             return Ok(russh::server::Auth::Reject {
                 proceed_with_methods: None,
@@ -610,9 +672,7 @@ impl russh::server::Handler for SshHandler {
 
         info!(conn_id = %self.conn_id, user = %user, ip = %self.peer_addr, "auth_none attempt (rejected)");
         Ok(russh::server::Auth::Reject {
-            proceed_with_methods: Some(
-                russh::MethodSet::PASSWORD | russh::MethodSet::PUBLICKEY,
-            ),
+            proceed_with_methods: Some(russh::MethodSet::PASSWORD | russh::MethodSet::PUBLICKEY),
         })
     }
 
@@ -653,9 +713,10 @@ impl russh::server::Handler for SshHandler {
 
         let conn_id = self.conn_id.clone();
         let relay_span = info_span!("ssh-relay", conn_id = %conn_id, user = %username, target = %format!("{}:{}", host, port));
-        tokio::spawn(async move {
-            let start = Instant::now();
-            let relay_req = SshRelayRequest {
+        tokio::spawn(
+            async move {
+                let start = Instant::now();
+                let relay_req = SshRelayRequest {
                     username: &username,
                     host: &host,
                     port,
@@ -668,52 +729,55 @@ impl russh::server::Handler for SshHandler {
                     quota_tracker: Some(quota_tracker),
                     quotas: user_quotas,
                 };
-            match proxy
-                .connect_and_relay(relay_req)
-                .await
-            {
-                Ok((bytes_up, bytes_down, resolved_addr)) => {
-                    let duration_ms = start.elapsed().as_millis() as u64;
-                    info!(
-                        conn_id = %conn_id,
-                        user = %username,
-                        target = %format!("{}:{}", host, port),
-                        resolved_ip = %resolved_addr.ip(),
-                        bytes_up = bytes_up,
-                        bytes_down = bytes_down,
-                        duration_ms = duration_ms,
-                        "Forwarding completed"
-                    );
-                    audit
-                        .log_proxy_complete_cid(
+                match proxy.connect_and_relay(relay_req).await {
+                    Ok((bytes_up, bytes_down, resolved_addr)) => {
+                        let duration_ms = start.elapsed().as_millis() as u64;
+                        info!(
+                            conn_id = %conn_id,
+                            user = %username,
+                            target = %format!("{}:{}", host, port),
+                            resolved_ip = %resolved_addr.ip(),
+                            bytes_up = bytes_up,
+                            bytes_down = bytes_down,
+                            duration_ms = duration_ms,
+                            "Forwarding completed"
+                        );
+                        audit
+                            .log_proxy_complete_cid(
+                                &username,
+                                &host,
+                                port,
+                                bytes_up,
+                                bytes_down,
+                                duration_ms,
+                                &peer,
+                                Some(resolved_addr.ip().to_string()),
+                                &conn_id,
+                            )
+                            .await;
+                        metrics.record_bytes_transferred(&username, bytes_up + bytes_down);
+                        metrics.record_typed_connection_duration(
                             &username,
-                            &host,
-                            port,
-                            bytes_up,
-                            bytes_down,
-                            duration_ms,
-                            &peer,
-                            Some(resolved_addr.ip().to_string()),
-                            &conn_id,
-                        )
-                        .await;
-                    metrics.record_bytes_transferred(&username, bytes_up + bytes_down);
-                    metrics.record_typed_connection_duration(&username, "ssh", duration_ms as f64 / 1000.0);
-                }
-                Err(e) => {
-                    let error_type = classify_relay_error(&e);
-                    warn!(
-                        conn_id = %conn_id,
-                        user = %username,
-                        target = %format!("{}:{}", host, port),
-                        error = %e,
-                        error_type = %error_type,
-                        "Forwarding failed"
-                    );
-                    metrics.record_error(error_type);
+                            "ssh",
+                            duration_ms as f64 / 1000.0,
+                        );
+                    }
+                    Err(e) => {
+                        let error_type = classify_relay_error(&e);
+                        warn!(
+                            conn_id = %conn_id,
+                            user = %username,
+                            target = %format!("{}:{}", host, port),
+                            error = %e,
+                            error_type = %error_type,
+                            "Forwarding failed"
+                        );
+                        metrics.record_error(error_type);
+                    }
                 }
             }
-        }.instrument(relay_span));
+            .instrument(relay_span),
+        );
 
         Ok(true)
     }
@@ -830,10 +894,7 @@ impl russh::server::Handler for SshHandler {
         };
 
         // Execute command in the virtual shell
-        let mut executor = CommandExecutor::new(
-            username,
-            self.ctx.config.shell.hostname.clone(),
-        );
+        let mut executor = CommandExecutor::new(username, self.ctx.config.shell.hostname.clone());
         let result = executor.execute(&command);
 
         if !result.output.is_empty() {
@@ -933,8 +994,9 @@ pub fn classify_relay_error(err: &anyhow::Error) -> &'static str {
     } else if let Some(io_err) = err.downcast_ref::<std::io::Error>() {
         match io_err.kind() {
             std::io::ErrorKind::ConnectionRefused => error_types::CONNECTION_REFUSED,
-            std::io::ErrorKind::ConnectionReset
-            | std::io::ErrorKind::ConnectionAborted => error_types::RELAY_ERROR,
+            std::io::ErrorKind::ConnectionReset | std::io::ErrorKind::ConnectionAborted => {
+                error_types::RELAY_ERROR
+            }
             std::io::ErrorKind::TimedOut => error_types::CONNECTION_TIMEOUT,
             _ => error_types::RELAY_ERROR,
         }

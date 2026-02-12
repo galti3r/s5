@@ -77,9 +77,7 @@ async fn log_auth_success_writes_correct_json() {
     let logger = AuditLogger::new(Some(audit_path.clone()), 0, 0, None);
 
     let source: SocketAddr = "192.168.1.100:12345".parse().unwrap();
-    logger
-        .log_auth_success("alice", &source, "password")
-        .await;
+    logger.log_auth_success("alice", &source, "password").await;
 
     sleep(Duration::from_millis(100)).await;
 
@@ -101,9 +99,7 @@ async fn log_auth_failure_writes_correct_json() {
     let logger = AuditLogger::new(Some(audit_path.clone()), 0, 0, None);
 
     let source: SocketAddr = "10.0.0.1:9999".parse().unwrap();
-    logger
-        .log_auth_failure("attacker", &source, "pubkey")
-        .await;
+    logger.log_auth_failure("attacker", &source, "pubkey").await;
 
     sleep(Duration::from_millis(100)).await;
 
@@ -406,7 +402,11 @@ async fn noop_logger_dropped_count_increments() {
     // The exact count depends on timing, but should be > 0
     // The first event might succeed (buffer capacity 1), rest should fail
     let dropped = logger.dropped_count();
-    assert!(dropped > 0, "noop logger should drop events, got {}", dropped);
+    assert!(
+        dropped > 0,
+        "noop logger should drop events, got {}",
+        dropped
+    );
 }
 
 // ===========================================================================
@@ -442,8 +442,14 @@ fn critical_events_classified_correctly() {
 fn event_type_returns_correct_strings() {
     let addr: SocketAddr = "1.2.3.4:5678".parse().unwrap();
 
-    assert_eq!(AuditEvent::auth_success("u", &addr, "pw").event_type(), "auth.success");
-    assert_eq!(AuditEvent::auth_failure("u", &addr, "pw").event_type(), "auth.failure");
+    assert_eq!(
+        AuditEvent::auth_success("u", &addr, "pw").event_type(),
+        "auth.success"
+    );
+    assert_eq!(
+        AuditEvent::auth_failure("u", &addr, "pw").event_type(),
+        "auth.failure"
+    );
     assert_eq!(
         AuditEvent::proxy_complete("u", "h", 80, 0, 0, 0, &addr, None).event_type(),
         "proxy.complete"
@@ -452,10 +458,22 @@ fn event_type_returns_correct_strings() {
         AuditEvent::acl_deny("u", "h", 80, None, "1.2.3.4", None, "r").event_type(),
         "acl.deny"
     );
-    assert_eq!(AuditEvent::connection_new(&addr, "ssh").event_type(), "connection.new");
-    assert_eq!(AuditEvent::connection_closed(&addr, "ssh").event_type(), "connection.closed");
-    assert_eq!(AuditEvent::config_reload(0, true, None).event_type(), "config.reload");
-    assert_eq!(AuditEvent::quota_exceeded("u", "bw", 0, 0).event_type(), "quota.exceeded");
+    assert_eq!(
+        AuditEvent::connection_new(&addr, "ssh").event_type(),
+        "connection.new"
+    );
+    assert_eq!(
+        AuditEvent::connection_closed(&addr, "ssh").event_type(),
+        "connection.closed"
+    );
+    assert_eq!(
+        AuditEvent::config_reload(0, true, None).event_type(),
+        "config.reload"
+    );
+    assert_eq!(
+        AuditEvent::quota_exceeded("u", "bw", 0, 0).event_type(),
+        "quota.exceeded"
+    );
     assert_eq!(
         AuditEvent::session_authenticated("u", &addr, "ssh", "pw").event_type(),
         "session.authenticated"

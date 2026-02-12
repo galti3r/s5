@@ -162,28 +162,79 @@ mod tests {
 
     #[test]
     fn test_classify_range_names() {
-        assert_eq!(classify_dangerous_ip(&"127.0.0.1".parse().unwrap()), Some("loopback"));
-        assert_eq!(classify_dangerous_ip(&"10.1.2.3".parse().unwrap()), Some("private-10"));
-        assert_eq!(classify_dangerous_ip(&"172.16.0.1".parse().unwrap()), Some("private-172"));
-        assert_eq!(classify_dangerous_ip(&"192.168.1.1".parse().unwrap()), Some("private-192"));
-        assert_eq!(classify_dangerous_ip(&"169.254.1.1".parse().unwrap()), Some("link-local"));
-        assert_eq!(classify_dangerous_ip(&"224.0.0.1".parse().unwrap()), Some("multicast"));
-        assert_eq!(classify_dangerous_ip(&"240.0.0.1".parse().unwrap()), Some("reserved"));
-        assert_eq!(classify_dangerous_ip(&"0.0.0.0".parse().unwrap()), Some("this-network"));
-        assert_eq!(classify_dangerous_ip(&"::1".parse().unwrap()), Some("ipv6-loopback"));
-        assert_eq!(classify_dangerous_ip(&"fc00::1".parse().unwrap()), Some("ipv6-ula"));
-        assert_eq!(classify_dangerous_ip(&"fe80::1".parse().unwrap()), Some("ipv6-link-local"));
-        assert_eq!(classify_dangerous_ip(&"ff02::1".parse().unwrap()), Some("ipv6-multicast"));
-        assert_eq!(classify_dangerous_ip(&"::".parse().unwrap()), Some("this-network"));
+        assert_eq!(
+            classify_dangerous_ip(&"127.0.0.1".parse().unwrap()),
+            Some("loopback")
+        );
+        assert_eq!(
+            classify_dangerous_ip(&"10.1.2.3".parse().unwrap()),
+            Some("private-10")
+        );
+        assert_eq!(
+            classify_dangerous_ip(&"172.16.0.1".parse().unwrap()),
+            Some("private-172")
+        );
+        assert_eq!(
+            classify_dangerous_ip(&"192.168.1.1".parse().unwrap()),
+            Some("private-192")
+        );
+        assert_eq!(
+            classify_dangerous_ip(&"169.254.1.1".parse().unwrap()),
+            Some("link-local")
+        );
+        assert_eq!(
+            classify_dangerous_ip(&"224.0.0.1".parse().unwrap()),
+            Some("multicast")
+        );
+        assert_eq!(
+            classify_dangerous_ip(&"240.0.0.1".parse().unwrap()),
+            Some("reserved")
+        );
+        assert_eq!(
+            classify_dangerous_ip(&"0.0.0.0".parse().unwrap()),
+            Some("this-network")
+        );
+        assert_eq!(
+            classify_dangerous_ip(&"::1".parse().unwrap()),
+            Some("ipv6-loopback")
+        );
+        assert_eq!(
+            classify_dangerous_ip(&"fc00::1".parse().unwrap()),
+            Some("ipv6-ula")
+        );
+        assert_eq!(
+            classify_dangerous_ip(&"fe80::1".parse().unwrap()),
+            Some("ipv6-link-local")
+        );
+        assert_eq!(
+            classify_dangerous_ip(&"ff02::1".parse().unwrap()),
+            Some("ipv6-multicast")
+        );
+        assert_eq!(
+            classify_dangerous_ip(&"::".parse().unwrap()),
+            Some("this-network")
+        );
         assert_eq!(classify_dangerous_ip(&"8.8.8.8".parse().unwrap()), None);
-        assert_eq!(classify_dangerous_ip(&"2607:f8b0:4004:800::200e".parse().unwrap()), None);
+        assert_eq!(
+            classify_dangerous_ip(&"2607:f8b0:4004:800::200e".parse().unwrap()),
+            None
+        );
     }
 
     #[test]
     fn test_classify_ipv4_mapped() {
-        assert_eq!(classify_dangerous_ip(&"::ffff:127.0.0.1".parse().unwrap()), Some("loopback"));
-        assert_eq!(classify_dangerous_ip(&"::ffff:10.0.0.1".parse().unwrap()), Some("private-10"));
-        assert_eq!(classify_dangerous_ip(&"::ffff:8.8.8.8".parse().unwrap()), None);
+        assert_eq!(
+            classify_dangerous_ip(&"::ffff:127.0.0.1".parse().unwrap()),
+            Some("loopback")
+        );
+        assert_eq!(
+            classify_dangerous_ip(&"::ffff:10.0.0.1".parse().unwrap()),
+            Some("private-10")
+        );
+        assert_eq!(
+            classify_dangerous_ip(&"::ffff:8.8.8.8".parse().unwrap()),
+            None
+        );
     }
 
     #[test]

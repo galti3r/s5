@@ -304,10 +304,7 @@ async fn set_ssh_key_fingerprint_stores_value() {
 
     handler.set_ssh_key_fingerprint("SHA256:abc123def456");
 
-    assert_eq!(
-        handler.ssh_key_fingerprint(),
-        Some("SHA256:abc123def456")
-    );
+    assert_eq!(handler.ssh_key_fingerprint(), Some("SHA256:abc123def456"));
 }
 
 #[tokio::test]
@@ -491,7 +488,9 @@ async fn record_auth_failure_below_max_allows_retry() {
     let mut handler = make_handler(ctx);
 
     // max_auth_attempts = 3, so attempt 1 should allow retry
-    let result = handler.test_record_auth_failure("alice", "password", 1).await;
+    let result = handler
+        .test_record_auth_failure("alice", "password", 1)
+        .await;
 
     match result {
         russh::server::Auth::Reject {
@@ -520,7 +519,9 @@ async fn record_auth_failure_attempt_2_still_allows_retry() {
     let ctx = setup(make_config(""));
     let mut handler = make_handler(ctx);
 
-    let result = handler.test_record_auth_failure("alice", "password", 2).await;
+    let result = handler
+        .test_record_auth_failure("alice", "password", 2)
+        .await;
 
     match result {
         russh::server::Auth::Reject {
@@ -545,7 +546,9 @@ async fn record_auth_failure_at_max_rejects_completely() {
     let mut handler = make_handler(ctx);
 
     // max_auth_attempts = 3, so attempt 3 should reject completely
-    let result = handler.test_record_auth_failure("alice", "password", 3).await;
+    let result = handler
+        .test_record_auth_failure("alice", "password", 3)
+        .await;
 
     match result {
         russh::server::Auth::Reject {
@@ -621,7 +624,9 @@ async fn record_auth_failure_custom_max_attempts_5() {
     let mut handler = make_handler(ctx);
 
     // Attempt 4 of 5 should still allow retry
-    let result = handler.test_record_auth_failure("alice", "password", 4).await;
+    let result = handler
+        .test_record_auth_failure("alice", "password", 4)
+        .await;
     match result {
         russh::server::Auth::Reject {
             proceed_with_methods,
@@ -632,7 +637,9 @@ async fn record_auth_failure_custom_max_attempts_5() {
     }
 
     // Attempt 5 of 5 should reject completely
-    let result = handler.test_record_auth_failure("alice", "password", 5).await;
+    let result = handler
+        .test_record_auth_failure("alice", "password", 5)
+        .await;
     match result {
         russh::server::Auth::Reject {
             proceed_with_methods,
@@ -697,10 +704,7 @@ async fn validate_forwarding_unknown_user_returns_none() {
         .await
         .unwrap();
 
-    assert!(
-        result.is_none(),
-        "unknown user should return None"
-    );
+    assert!(result.is_none(), "unknown user should return None");
 }
 
 // ===========================================================================
@@ -766,10 +770,7 @@ async fn validate_forwarding_invalid_port_returns_none() {
         .await
         .unwrap();
 
-    assert!(
-        result.is_none(),
-        "port exceeding u16 should return None"
-    );
+    assert!(result.is_none(), "port exceeding u16 should return None");
 }
 
 #[tokio::test]
@@ -784,10 +785,7 @@ async fn validate_forwarding_port_just_above_u16_returns_none() {
         .await
         .unwrap();
 
-    assert!(
-        result.is_none(),
-        "port 65536 exceeds u16::MAX (65535)"
-    );
+    assert!(result.is_none(), "port 65536 exceeds u16::MAX (65535)");
 }
 
 // ===========================================================================
@@ -952,10 +950,8 @@ fn classify_relay_error_returns_known_constants() {
         error_types::CONNECTION_REFUSED
     );
 
-    let io_timeout = anyhow::Error::from(std::io::Error::new(
-        std::io::ErrorKind::TimedOut,
-        "timeout",
-    ));
+    let io_timeout =
+        anyhow::Error::from(std::io::Error::new(std::io::ErrorKind::TimedOut, "timeout"));
     assert_eq!(
         classify_relay_error(&io_timeout),
         error_types::CONNECTION_TIMEOUT
@@ -981,7 +977,9 @@ async fn record_auth_failure_max_attempts_one() {
     let mut handler = make_handler(ctx);
 
     // First attempt (attempt 1) at max 1 should reject completely
-    let result = handler.test_record_auth_failure("alice", "password", 1).await;
+    let result = handler
+        .test_record_auth_failure("alice", "password", 1)
+        .await;
     match result {
         russh::server::Auth::Reject {
             proceed_with_methods,
@@ -1005,7 +1003,9 @@ async fn record_auth_failure_max_attempts_ten() {
     let mut handler = make_handler(ctx);
 
     // Attempt 9 of 10 should still allow retry
-    let result = handler.test_record_auth_failure("alice", "password", 9).await;
+    let result = handler
+        .test_record_auth_failure("alice", "password", 9)
+        .await;
     match result {
         russh::server::Auth::Reject {
             proceed_with_methods,
@@ -1166,7 +1166,10 @@ async fn validate_forwarding_with_ipv6_peer() {
         .await
         .unwrap();
 
-    assert!(result.is_some(), "IPv6 peer with no source IP restriction should work");
+    assert!(
+        result.is_some(),
+        "IPv6 peer with no source IP restriction should work"
+    );
 }
 
 // ===========================================================================
@@ -1487,7 +1490,10 @@ allow_shell = true
         .test_validate_forwarding_request("evil.com", 443)
         .await
         .unwrap();
-    assert!(result.is_some(), "handler passes through; ACL is enforced by proxy engine");
+    assert!(
+        result.is_some(),
+        "handler passes through; ACL is enforced by proxy engine"
+    );
 }
 
 // ===========================================================================

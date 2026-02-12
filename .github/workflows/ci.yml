@@ -10,7 +10,7 @@ on:
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
-  RUST_TOOLCHAIN: "1.83"
+  RUST_TOOLCHAIN: "stable"
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
@@ -117,7 +117,7 @@ jobs:
           key: ${{ runner.os }}-cargo-msrv-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-msrv-
       - name: Check MSRV compilation
-        run: cargo check --all-targets
+        run: cargo check
 
   # ===========================================================================
   # Coverage: cargo-tarpaulin

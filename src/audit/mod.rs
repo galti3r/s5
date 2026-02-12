@@ -20,10 +20,21 @@ pub struct AuditLogger {
 }
 
 impl AuditLogger {
-    pub fn new(log_path: Option<PathBuf>, max_size_bytes: u64, max_files: u32, webhook_dispatcher: Option<Arc<WebhookDispatcher>>) -> Self {
+    pub fn new(
+        log_path: Option<PathBuf>,
+        max_size_bytes: u64,
+        max_files: u32,
+        webhook_dispatcher: Option<Arc<WebhookDispatcher>>,
+    ) -> Self {
         let (sender, receiver) = mpsc::channel(AUDIT_CHANNEL_CAPACITY);
 
-        tokio::spawn(audit_writer_task(receiver, log_path, max_size_bytes, max_files, webhook_dispatcher));
+        tokio::spawn(audit_writer_task(
+            receiver,
+            log_path,
+            max_size_bytes,
+            max_files,
+            webhook_dispatcher,
+        ));
 
         Self {
             sender,
@@ -75,8 +86,16 @@ impl AuditLogger {
         source: &SocketAddr,
         resolved_ip: Option<String>,
     ) {
-        let event =
-            AuditEvent::proxy_complete(username, host, port, bytes_up, bytes_down, duration_ms, source, resolved_ip);
+        let event = AuditEvent::proxy_complete(
+            username,
+            host,
+            port,
+            bytes_up,
+            bytes_down,
+            duration_ms,
+            source,
+            resolved_ip,
+        );
         self.try_send(event);
     }
 
@@ -91,7 +110,15 @@ impl AuditLogger {
         matched_rule: Option<String>,
         reason: &str,
     ) {
-        let event = AuditEvent::acl_deny(username, host, port, resolved_ip, source_ip, matched_rule, reason);
+        let event = AuditEvent::acl_deny(
+            username,
+            host,
+            port,
+            resolved_ip,
+            source_ip,
+            matched_rule,
+            reason,
+        );
         self.try_send(event);
     }
 
@@ -110,18 +137,38 @@ impl AuditLogger {
         self.try_send(event);
     }
 
-    pub fn log_quota_exceeded(&self, username: &str, quota_type: &str, current_usage: u64, limit: u64) {
+    pub fn log_quota_exceeded(
+        &self,
+        username: &str,
+        quota_type: &str,
+        current_usage: u64,
+        limit: u64,
+    ) {
         let event = AuditEvent::quota_exceeded(username, quota_type, current_usage, limit);
         self.try_send(event);
     }
 
-    pub fn log_session_authenticated(&self, username: &str, source: &SocketAddr, protocol: &str, method: &str) {
+    pub fn log_session_authenticated(
+        &self,
+        username: &str,
+        source: &SocketAddr,
+        protocol: &str,
+        method: &str,
+    ) {
         let event = AuditEvent::session_authenticated(username, source, protocol, method);
         self.try_send(event);
     }
 
-    pub fn log_session_ended(&self, username: &str, source: &SocketAddr, protocol: &str, duration_secs: u64, total_bytes: u64) {
-        let event = AuditEvent::session_ended(username, source, protocol, duration_secs, total_bytes);
+    pub fn log_session_ended(
+        &self,
+        username: &str,
+        source: &SocketAddr,
+        protocol: &str,
+        duration_secs: u64,
+        total_bytes: u64,
+    ) {
+        let event =
+            AuditEvent::session_ended(username, source, protocol, duration_secs, total_bytes);
         self.try_send(event);
     }
 
@@ -147,12 +194,24 @@ impl AuditLogger {
 
     // --- Correlation-ID-aware variants ---
 
-    pub async fn log_auth_success_cid(&self, username: &str, source: &SocketAddr, method: &str, cid: &str) {
+    pub async fn log_auth_success_cid(
+        &self,
+        username: &str,
+        source: &SocketAddr,
+        method: &str,
+        cid: &str,
+    ) {
         let event = AuditEvent::auth_success_with_cid(username, source, method, cid);
         self.try_send(event);
     }
 
-    pub async fn log_auth_failure_cid(&self, username: &str, source: &SocketAddr, method: &str, cid: &str) {
+    pub async fn log_auth_failure_cid(
+        &self,
+        username: &str,
+        source: &SocketAddr,
+        method: &str,
+        cid: &str,
+    ) {
         let event = AuditEvent::auth_failure_with_cid(username, source, method, cid);
         self.try_send(event);
     }
@@ -171,7 +230,15 @@ impl AuditLogger {
         cid: &str,
     ) {
         let event = AuditEvent::proxy_complete_with_cid(
-            username, host, port, bytes_up, bytes_down, duration_ms, source, resolved_ip, cid,
+            username,
+            host,
+            port,
+            bytes_up,
+            bytes_down,
+            duration_ms,
+            source,
+            resolved_ip,
+            cid,
         );
         self.try_send(event);
     }
@@ -189,7 +256,14 @@ impl AuditLogger {
         cid: &str,
     ) {
         let event = AuditEvent::acl_deny_with_cid(
-            username, host, port, resolved_ip, source_ip, matched_rule, reason, cid,
+            username,
+            host,
+            port,
+            resolved_ip,
+            source_ip,
+            matched_rule,
+            reason,
+            cid,
         );
         self.try_send(event);
     }
@@ -204,12 +278,26 @@ impl AuditLogger {
         self.try_send(event);
     }
 
-    pub fn log_session_authenticated_cid(&self, username: &str, source: &SocketAddr, protocol: &str, method: &str, cid: &str) {
-        let event = AuditEvent::session_authenticated_with_cid(username, source, protocol, method, cid);
+    pub fn log_session_authenticated_cid(
+        &self,
+        username: &str,
+        source: &SocketAddr,
+        protocol: &str,
+        method: &str,
+        cid: &str,
+    ) {
+        let event =
+            AuditEvent::session_authenticated_with_cid(username, source, protocol, method, cid);
         self.try_send(event);
     }
 
-    pub fn log_rate_limit_exceeded_cid(&self, username: &str, source: &SocketAddr, limit_type: &str, cid: &str) {
+    pub fn log_rate_limit_exceeded_cid(
+        &self,
+        username: &str,
+        source: &SocketAddr,
+        limit_type: &str,
+        cid: &str,
+    ) {
         let event = AuditEvent::rate_limit_exceeded_with_cid(username, source, limit_type, cid);
         self.try_send(event);
     }
@@ -240,7 +328,10 @@ impl AuditLogger {
                                 counter.inc();
                             }
                             if dropped % 100 == 1 {
-                                warn!(total_dropped = dropped, "Audit events being dropped due to channel overflow");
+                                warn!(
+                                    total_dropped = dropped,
+                                    "Audit events being dropped due to channel overflow"
+                                );
                             }
                             return;
                         }
@@ -252,7 +343,10 @@ impl AuditLogger {
                         counter.inc();
                     }
                     if dropped % 100 == 1 {
-                        warn!(total_dropped = dropped, "Audit events being dropped due to channel overflow");
+                        warn!(
+                            total_dropped = dropped,
+                            "Audit events being dropped due to channel overflow"
+                        );
                     }
                     return;
                 }
@@ -267,7 +361,10 @@ impl AuditLogger {
                     counter.inc();
                 }
                 if dropped % 100 == 1 {
-                    warn!(total_dropped = dropped, "Audit events being dropped due to channel overflow");
+                    warn!(
+                        total_dropped = dropped,
+                        "Audit events being dropped due to channel overflow"
+                    );
                 }
             }
             Err(mpsc::error::TrySendError::Closed(_)) => {
@@ -276,7 +373,10 @@ impl AuditLogger {
                     counter.inc();
                 }
                 if dropped % 100 == 1 {
-                    warn!(total_dropped = dropped, "Audit events being dropped due to channel overflow");
+                    warn!(
+                        total_dropped = dropped,
+                        "Audit events being dropped due to channel overflow"
+                    );
                 }
             }
         }
@@ -312,7 +412,10 @@ async fn audit_writer_task(
 
     // Track current file size
     let mut current_size: u64 = if let (Some(ref path), Some(_)) = (&log_path, &file) {
-        tokio::fs::metadata(path).await.map(|m| m.len()).unwrap_or(0)
+        tokio::fs::metadata(path)
+            .await
+            .map(|m| m.len())
+            .unwrap_or(0)
     } else {
         0
     };

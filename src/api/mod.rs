@@ -10,8 +10,8 @@ pub mod pagination;
 pub mod quotas;
 pub mod reload;
 pub mod sessions;
-pub mod ssh_config;
 pub mod sse;
+pub mod ssh_config;
 pub mod users;
 pub mod ws;
 
@@ -196,7 +196,7 @@ async fn metrics_readyz_handler(
     let body = ReadyzResponse {
         ready,
         checks: ReadyzChecks {
-            auth: "ok",       // Not available on metrics server; assume ok
+            auth: "ok", // Not available on metrics server; assume ok
             metrics: "ok",
             maintenance: if ready { "disabled" } else { "enabled" },
         },
@@ -225,12 +225,8 @@ struct ReadyzChecks {
     maintenance: &'static str,
 }
 
-async fn readyz_handler(
-    State(state): State<AppState>,
-) -> impl IntoResponse {
-    let maint = state
-        .maintenance
-        .load(std::sync::atomic::Ordering::Relaxed);
+async fn readyz_handler(State(state): State<AppState>) -> impl IntoResponse {
+    let maint = state.maintenance.load(std::sync::atomic::Ordering::Relaxed);
 
     // Check auth service is loaded and has users
     let auth_ok = {
@@ -250,7 +246,11 @@ async fn readyz_handler(
         checks: ReadyzChecks {
             auth: if auth_ok { "ok" } else { "no_users_loaded" },
             metrics: if metrics_ok { "ok" } else { "unavailable" },
-            maintenance: if maintenance_check { "disabled" } else { "enabled" },
+            maintenance: if maintenance_check {
+                "disabled"
+            } else {
+                "enabled"
+            },
         },
     };
 
@@ -282,7 +282,9 @@ async fn api_metrics_middleware(
     let status = response.status().as_u16();
 
     state.metrics.record_http_request(&method, &path, status);
-    state.metrics.record_http_request_duration(&method, &path, duration);
+    state
+        .metrics
+        .record_http_request_duration(&method, &path, duration);
 
     response
 }
@@ -314,9 +316,7 @@ async fn auth_middleware(
     if let Some(h) = auth_header {
         if h.starts_with("Bearer ") {
             let provided = &h.as_bytes()[7..];
-            if provided.len() == expected.len()
-                && bool::from(provided.ct_eq(expected))
-            {
+            if provided.len() == expected.len() && bool::from(provided.ct_eq(expected)) {
                 return next.run(req).await;
             }
             return (StatusCode::UNAUTHORIZED, "unauthorized").into_response();
@@ -329,8 +329,7 @@ async fn auth_middleware(
         for pair in query.split('&') {
             if let Some(value) = pair.strip_prefix("ticket=") {
                 // URL-decode the ticket (encodeURIComponent encodes ':' as '%3A')
-                let decoded = percent_encoding::percent_decode_str(value)
-                    .decode_utf8_lossy();
+                let decoded = percent_encoding::percent_decode_str(value).decode_utf8_lossy();
                 if verify_sse_ticket(&decoded, &state.api_token) {
                     return next.run(req).await;
                 }
@@ -355,9 +354,7 @@ async fn status_handler(State(state): State<AppState>) -> impl IntoResponse {
     let active = state.proxy_engine.active_connections();
     let auth = state.auth_service.read().await;
     let total_users = auth.user_store().len();
-    let maint = state
-        .maintenance
-        .load(std::sync::atomic::Ordering::Relaxed);
+    let maint = state.maintenance.load(std::sync::atomic::Ordering::Relaxed);
 
     ApiResponse::ok(StatusInfo {
         status: if maint {
@@ -381,9 +378,7 @@ struct HealthDetail {
 }
 
 async fn api_health_handler(State(state): State<AppState>) -> impl IntoResponse {
-    let maint = state
-        .maintenance
-        .load(std::sync::atomic::Ordering::Relaxed);
+    let maint = state.maintenance.load(std::sync::atomic::Ordering::Relaxed);
     let active = state.proxy_engine.active_connections();
     let uptime = state.start_time.elapsed().as_secs();
 
@@ -443,7 +438,7 @@ async fn sse_ticket_handler(State(state): State<AppState>) -> impl IntoResponse 
         ticket,
         expires_in: SSE_TICKET_VALIDITY_SECS,
     })
-        .into_response()
+    .into_response()
 }
 
 /// Verify an SSE ticket (HMAC-SHA256 with timestamp and nonce).
@@ -530,7 +525,10 @@ pub async fn start_api_server(
         .route("/api/ssh-config", get(ssh_config::ssh_config_snippet))
         .route("/api/quotas", get(quotas::list_quotas))
         .route("/api/quotas/:username", get(quotas::get_user_quota))
-        .route("/api/quotas/:username/reset", post(quotas::reset_user_quota))
+        .route(
+            "/api/quotas/:username/reset",
+            post(quotas::reset_user_quota),
+        )
         .route("/api/groups", get(groups::list_groups))
         .route("/api/groups/:name", get(groups::get_group))
         .route("/api/sessions", get(sessions::list_sessions))

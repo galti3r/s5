@@ -240,10 +240,8 @@ fn init_all_flags() {
 // ---------------------------------------------------------------------------
 #[test]
 fn init_with_preset() {
-    let cli = Cli::try_parse_from([
-        "s5", "init", "--preset", "bastion", "--password", "test",
-    ])
-    .unwrap();
+    let cli =
+        Cli::try_parse_from(["s5", "init", "--preset", "bastion", "--password", "test"]).unwrap();
     match cli.command {
         Some(Command::Init { preset, .. }) => {
             assert_eq!(preset.as_deref(), Some("bastion"));
@@ -304,11 +302,20 @@ fn show_config_json_format() {
 #[test]
 fn backup_subcommand() {
     let cli = Cli::try_parse_from([
-        "s5", "backup", "--token", "my-token", "--output", "/tmp/backup.json",
+        "s5",
+        "backup",
+        "--token",
+        "my-token",
+        "--output",
+        "/tmp/backup.json",
     ])
     .unwrap();
     match cli.command {
-        Some(Command::Backup { output, token, api_addr }) => {
+        Some(Command::Backup {
+            output,
+            token,
+            api_addr,
+        }) => {
             assert_eq!(token, "my-token");
             assert_eq!(output.unwrap().to_str().unwrap(), "/tmp/backup.json");
             assert_eq!(api_addr, "http://127.0.0.1:9091"); // default
@@ -323,11 +330,20 @@ fn backup_subcommand() {
 #[test]
 fn restore_subcommand() {
     let cli = Cli::try_parse_from([
-        "s5", "restore", "--token", "my-token", "--input", "/tmp/backup.json",
+        "s5",
+        "restore",
+        "--token",
+        "my-token",
+        "--input",
+        "/tmp/backup.json",
     ])
     .unwrap();
     match cli.command {
-        Some(Command::Restore { input, token, api_addr }) => {
+        Some(Command::Restore {
+            input,
+            token,
+            api_addr,
+        }) => {
             assert_eq!(token, "my-token");
             assert_eq!(input.to_str().unwrap(), "/tmp/backup.json");
             assert_eq!(api_addr, "http://127.0.0.1:9091"); // default

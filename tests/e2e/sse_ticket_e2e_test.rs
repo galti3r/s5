@@ -1,6 +1,6 @@
 #[allow(dead_code, unused_imports)]
 mod helpers;
-use helpers::{free_port, hash_pass, api_config, start_api};
+use helpers::{api_config, free_port, hash_pass, start_api};
 
 // ---------------------------------------------------------------------------
 // Test 1: SSE ticket endpoint returns ticket with Bearer auth
@@ -26,10 +26,7 @@ async fn sse_ticket_endpoint_returns_ticket() {
     assert_eq!(body["success"], true);
     let data = &body["data"];
     let ticket = data["ticket"].as_str().unwrap();
-    assert!(
-        !ticket.is_empty(),
-        "ticket should not be empty"
-    );
+    assert!(!ticket.is_empty(), "ticket should not be empty");
     assert!(
         ticket.contains(':'),
         "ticket should contain timestamp:signature format"
@@ -68,7 +65,11 @@ async fn sse_ticket_endpoint_requires_auth() {
         .send()
         .await
         .unwrap();
-    assert_eq!(resp.status(), 401, "POST with wrong token should return 401");
+    assert_eq!(
+        resp.status(),
+        401,
+        "POST with wrong token should return 401"
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -104,7 +105,11 @@ async fn sse_ticket_can_authenticate_sse() {
         .send()
         .await
         .unwrap();
-    assert_eq!(resp.status(), 200, "SSE with valid ticket should return 200");
+    assert_eq!(
+        resp.status(),
+        200,
+        "SSE with valid ticket should return 200"
+    );
 
     let content_type = resp
         .headers()

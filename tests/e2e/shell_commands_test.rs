@@ -415,7 +415,9 @@ async fn test_shell_show_bandwidth() {
 
     let output = shell_command(port, "pass", "show bandwidth").await;
     assert!(
-        output.contains("Download") || output.contains("unlimited") || output.contains("context not available"),
+        output.contains("Download")
+            || output.contains("unlimited")
+            || output.contains("context not available"),
         "show bandwidth should return bandwidth info or context unavailable, got: {}",
         output
     );

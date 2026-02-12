@@ -36,11 +36,15 @@ fn daily_window_at_exactly_midnight() {
 fn daily_window_23_59_end_exclusive() {
     // Window from 23:00 to 23:59 -- at 23:59 it should still be active
     let window = make_window("daily 23:00-23:59");
-    let at_23_58 = chrono::Utc.with_ymd_and_hms(2026, 2, 12, 23, 58, 0).unwrap();
+    let at_23_58 = chrono::Utc
+        .with_ymd_and_hms(2026, 2, 12, 23, 58, 0)
+        .unwrap();
     assert!(window.is_active(&at_23_58));
 
     // At 23:59 it should still be active (23:59 < 23:59 is false -> not active)
-    let at_23_59 = chrono::Utc.with_ymd_and_hms(2026, 2, 12, 23, 59, 0).unwrap();
+    let at_23_59 = chrono::Utc
+        .with_ymd_and_hms(2026, 2, 12, 23, 59, 0)
+        .unwrap();
     assert!(!window.is_active(&at_23_59)); // end is exclusive
 }
 
@@ -63,7 +67,9 @@ fn all_weekdays_case_insensitive() {
 
     for (schedule, year, month, day) in cases {
         let window = make_window(schedule);
-        let now = chrono::Utc.with_ymd_and_hms(year, month, day, 10, 30, 0).unwrap();
+        let now = chrono::Utc
+            .with_ymd_and_hms(year, month, day, 10, 30, 0)
+            .unwrap();
         assert!(
             window.is_active(&now),
             "Expected {} to be active on {}-{:02}-{:02} 10:30",
@@ -79,7 +85,9 @@ fn all_weekdays_case_insensitive() {
 fn weekday_wrong_day_not_active() {
     // Tuesday Feb 10 should NOT match a Monday window
     let window = make_window("Mon 10:00-11:00");
-    let tuesday = chrono::Utc.with_ymd_and_hms(2026, 2, 10, 10, 30, 0).unwrap();
+    let tuesday = chrono::Utc
+        .with_ymd_and_hms(2026, 2, 10, 10, 30, 0)
+        .unwrap();
     assert!(!window.is_active(&tuesday));
 }
 
@@ -104,7 +112,9 @@ fn schedule_with_only_day_no_time_range() {
 #[test]
 fn schedule_missing_dash_in_time_range() {
     let window = make_window("daily 10:00+11:00");
-    let now = chrono::Utc.with_ymd_and_hms(2026, 2, 12, 10, 30, 0).unwrap();
+    let now = chrono::Utc
+        .with_ymd_and_hms(2026, 2, 12, 10, 30, 0)
+        .unwrap();
     assert!(!window.is_active(&now));
 }
 
@@ -118,7 +128,9 @@ fn schedule_with_invalid_hour() {
 #[test]
 fn schedule_with_invalid_minute() {
     let window = make_window("daily 10:60-11:00");
-    let now = chrono::Utc.with_ymd_and_hms(2026, 2, 12, 10, 30, 0).unwrap();
+    let now = chrono::Utc
+        .with_ymd_and_hms(2026, 2, 12, 10, 30, 0)
+        .unwrap();
     assert!(!window.is_active(&now));
 }
 
@@ -134,7 +146,9 @@ fn schedule_with_extra_spaces_in_time() {
     // The parser uses splitn(2, ' '), so "daily  10:00-11:00" should parse
     // day_spec="daily", time_range=" 10:00-11:00" which has leading space
     let window = make_window("daily  10:00-11:00");
-    let now = chrono::Utc.with_ymd_and_hms(2026, 2, 12, 10, 30, 0).unwrap();
+    let now = chrono::Utc
+        .with_ymd_and_hms(2026, 2, 12, 10, 30, 0)
+        .unwrap();
     // The trim() in parse_hhmm should handle leading spaces
     assert!(window.is_active(&now));
 }
@@ -144,7 +158,9 @@ fn schedule_with_three_parts() {
     // "daily 10:00 11:00" -- splitn(2, ' ') gives ["daily", "10:00 11:00"]
     // Then split('-') on "10:00 11:00" gives only one part -- invalid
     let window = make_window("daily 10:00 11:00");
-    let now = chrono::Utc.with_ymd_and_hms(2026, 2, 12, 10, 30, 0).unwrap();
+    let now = chrono::Utc
+        .with_ymd_and_hms(2026, 2, 12, 10, 30, 0)
+        .unwrap();
     assert!(!window.is_active(&now));
 }
 
@@ -207,6 +223,8 @@ fn daily_window_active_on_any_day_of_week() {
 fn unknown_day_name_never_active() {
     let window = make_window("xyz 10:00-11:00");
     // Even at 10:30 on any day, "xyz" doesn't match any weekday
-    let now = chrono::Utc.with_ymd_and_hms(2026, 2, 12, 10, 30, 0).unwrap();
+    let now = chrono::Utc
+        .with_ymd_and_hms(2026, 2, 12, 10, 30, 0)
+        .unwrap();
     assert!(!window.is_active(&now));
 }

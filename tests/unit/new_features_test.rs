@@ -7,11 +7,11 @@ use std::collections::HashMap;
 use std::net::IpAddr;
 use std::time::Instant;
 
+use s5::config::acl::ParsedAcl;
 use s5::config::parse_config;
 use s5::config::types::{
     AclPolicyConfig, ConnectionPoolConfig, MotdConfig, ShellPermissions, UserRole,
 };
-use s5::config::acl::ParsedAcl;
 use s5::motd::{default_motd_template, render_motd, resolve_motd_config, MotdContext};
 use s5::security::ip_reputation::IpReputationManager;
 use s5::shell::context::ShellContext;
@@ -257,10 +257,10 @@ fn test_ip_reputation_mixed_events() {
     let mgr = IpReputationManager::new(true, 100);
     let ip: IpAddr = "203.0.113.1".parse().unwrap();
 
-    mgr.record_auth_failure(&ip);       // +10
-    mgr.record_acl_denial(&ip);         // +5
-    mgr.record_rapid_connections(&ip);  // +3
-    // Total ~18
+    mgr.record_auth_failure(&ip); // +10
+    mgr.record_acl_denial(&ip); // +5
+    mgr.record_rapid_connections(&ip); // +3
+                                       // Total ~18
     let score = mgr.get_score(&ip);
     assert!(
         (17..=18).contains(&score),
@@ -302,7 +302,7 @@ fn make_motd_context() -> MotdContext {
         connections: 2,
         acl_policy: "deny".to_string(),
         expires_at: Some("2099-06-15T12:00:00Z".to_string()),
-        bandwidth_used: 5_242_880,       // 5 MB
+        bandwidth_used: 5_242_880,      // 5 MB
         bandwidth_limit: 1_073_741_824, // 1 GB
         last_login: Some("2026-02-01T10:00:00Z".to_string()),
         uptime: 93784, // 1d 2h 3m 4s
@@ -376,8 +376,7 @@ fn test_render_motd_no_group_no_expiry_first_login() {
     ctx.group = None;
     ctx.expires_at = None;
     ctx.last_login = None;
-    let template =
-        "Group: {group} | Expires: {expires_at} | Last login: {last_login}";
+    let template = "Group: {group} | Expires: {expires_at} | Last login: {last_login}";
     let result = render_motd(template, &ctx, false);
     assert!(result.contains("Group: none"));
     assert!(result.contains("Expires: never"));
@@ -485,8 +484,7 @@ fn test_resolve_motd_config_user_overrides_group_and_global() {
         template: Some("User special".to_string()),
         colors: true,
     };
-    let (enabled, template, colors) =
-        resolve_motd_config(&global, Some(&group), Some(&user));
+    let (enabled, template, colors) = resolve_motd_config(&global, Some(&group), Some(&user));
     assert!(enabled);
     assert_eq!(template, Some("User special".to_string()));
     assert!(colors);
@@ -530,7 +528,8 @@ fn test_resolve_motd_config_group_inherits_template_from_global() {
 }
 
 #[test]
-fn test_resolve_motd_config_user_overrides_group_template_but_inherits_global_when_group_has_none() {
+fn test_resolve_motd_config_user_overrides_group_template_but_inherits_global_when_group_has_none()
+{
     let global = MotdConfig {
         enabled: true,
         template: Some("Global".to_string()),
@@ -546,8 +545,7 @@ fn test_resolve_motd_config_user_overrides_group_template_but_inherits_global_wh
         template: None, // user does not override either
         colors: false,
     };
-    let (enabled, template, colors) =
-        resolve_motd_config(&global, Some(&group), Some(&user));
+    let (enabled, template, colors) = resolve_motd_config(&global, Some(&group), Some(&user));
     assert!(enabled);
     // Neither group nor user set a template, so global template carries through.
     assert_eq!(template, Some("Global".to_string()));
@@ -665,10 +663,7 @@ fn test_shell_context_with_admin_role() {
     ctx.ssh_key_fingerprint = Some("SHA256:abc123".to_string());
     assert!(matches!(ctx.role, UserRole::Admin));
     assert_eq!(ctx.group.as_deref(), Some("admins"));
-    assert_eq!(
-        ctx.ssh_key_fingerprint.as_deref(),
-        Some("SHA256:abc123")
-    );
+    assert_eq!(ctx.ssh_key_fingerprint.as_deref(), Some("SHA256:abc123"));
 }
 
 #[test]
@@ -752,11 +747,7 @@ ip_reputation_ban_threshold = 25
     rep.record_auth_failure(&ip);
     rep.record_auth_failure(&ip);
     let score = rep.get_score(&ip);
-    assert!(
-        (19..=20).contains(&score),
-        "expected ~20, got {}",
-        score
-    );
+    assert!((19..=20).contains(&score), "expected ~20, got {}", score);
 
     // 20 < 25 so should not ban yet.
     assert!(!rep.should_ban(&ip));
@@ -821,7 +812,11 @@ fn test_ip_reputation_cleanup_preserves_high_scores() {
 
     // High score should survive cleanup.
     let score = mgr.get_score(&ip);
-    assert!(score >= 90, "high score should survive cleanup, got {}", score);
+    assert!(
+        score >= 90,
+        "high score should survive cleanup, got {}",
+        score
+    );
 }
 
 // ---------------------------------------------------------------------------

@@ -27,10 +27,7 @@ pub fn run(args: &[String], ctx: &ShellContext) -> CommandResult {
     let mut output = String::new();
 
     // DNS resolution
-    output.push_str(&format!(
-        "Resolving {}...\r\n",
-        color(CYAN, host, colors)
-    ));
+    output.push_str(&format!("Resolving {}...\r\n", color(CYAN, host, colors)));
 
     let start = std::time::Instant::now();
     let addr_str = format!("{}:{}", host, port);
@@ -39,10 +36,7 @@ pub fn run(args: &[String], ctx: &ShellContext) -> CommandResult {
             let elapsed = start.elapsed();
             let ips: Vec<String> = addrs.map(|a| a.ip().to_string()).collect();
             if ips.is_empty() {
-                output.push_str(&format!(
-                    "{}\r\n",
-                    color(RED, "No addresses found", colors)
-                ));
+                output.push_str(&format!("{}\r\n", color(RED, "No addresses found", colors)));
                 return CommandResult::output(output);
             }
 
@@ -59,15 +53,23 @@ pub fn run(args: &[String], ctx: &ShellContext) -> CommandResult {
             match policy {
                 AclPolicy::Allow => {
                     let msg = match rule {
-                        Some(r) => format!("ACL check: {} ({})", color(GREEN, "allowed", colors), r),
-                        None => format!("ACL check: {} (default policy)", color(GREEN, "allowed", colors)),
+                        Some(r) => {
+                            format!("ACL check: {} ({})", color(GREEN, "allowed", colors), r)
+                        }
+                        None => format!(
+                            "ACL check: {} (default policy)",
+                            color(GREEN, "allowed", colors)
+                        ),
                     };
                     output.push_str(&format!("{}\r\n", msg));
                 }
                 AclPolicy::Deny => {
                     let msg = match rule {
                         Some(r) => format!("ACL check: {} ({})", color(RED, "denied", colors), r),
-                        None => format!("ACL check: {} (default policy)", color(RED, "denied", colors)),
+                        None => format!(
+                            "ACL check: {} (default policy)",
+                            color(RED, "denied", colors)
+                        ),
                     };
                     output.push_str(&format!("{}\r\n", msg));
                 }
@@ -118,8 +120,8 @@ fn parse_host_port_default(input: &str) -> (&str, u16) {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::test_helpers::make_test_ctx;
+    use super::*;
 
     fn make_ctx() -> ShellContext {
         make_test_ctx()

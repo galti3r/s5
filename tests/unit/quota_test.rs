@@ -67,7 +67,9 @@ fn daily_connection_quota_enforced() {
     assert!(tracker.record_connection("alice", Some(&quota)).is_ok());
     assert!(tracker.record_connection("alice", Some(&quota)).is_ok());
     assert!(tracker.record_connection("alice", Some(&quota)).is_ok());
-    let err = tracker.record_connection("alice", Some(&quota)).unwrap_err();
+    let err = tracker
+        .record_connection("alice", Some(&quota))
+        .unwrap_err();
     assert!(err.contains("daily connection quota"));
 }
 
@@ -139,7 +141,9 @@ fn per_user_per_second_rate_limit() {
     tracker.record_connection("alice", None).unwrap();
     tracker.record_connection("alice", None).unwrap();
     // Third should be rate-limited
-    let err = tracker.check_connection_rate("alice", &rate, &limits).unwrap_err();
+    let err = tracker
+        .check_connection_rate("alice", &rate, &limits)
+        .unwrap_err();
     assert!(err.contains("per-second"));
 }
 
@@ -155,7 +159,9 @@ fn per_user_per_minute_rate_limit() {
     tracker.record_connection("alice", None).unwrap();
     tracker.record_connection("alice", None).unwrap();
     tracker.record_connection("alice", None).unwrap();
-    let err = tracker.check_connection_rate("alice", &rate, &limits).unwrap_err();
+    let err = tracker
+        .check_connection_rate("alice", &rate, &limits)
+        .unwrap_err();
     assert!(err.contains("per-minute"));
 }
 
@@ -169,7 +175,9 @@ fn per_user_per_hour_rate_limit() {
         connections_per_hour: 1,
     };
     tracker.record_connection("alice", None).unwrap();
-    let err = tracker.check_connection_rate("alice", &rate, &limits).unwrap_err();
+    let err = tracker
+        .check_connection_rate("alice", &rate, &limits)
+        .unwrap_err();
     assert!(err.contains("per-hour"));
 }
 
@@ -186,7 +194,9 @@ fn zero_rate_limit_means_unlimited() {
     for _ in 0..100 {
         tracker.record_connection("alice", None).unwrap();
     }
-    assert!(tracker.check_connection_rate("alice", &rate, &limits).is_ok());
+    assert!(tracker
+        .check_connection_rate("alice", &rate, &limits)
+        .is_ok());
 }
 
 // ---------------------------------------------------------------------------
@@ -205,7 +215,9 @@ fn server_per_second_rate_limit() {
     let rate = RateLimitsConfig::default();
     tracker.record_connection("alice", None).unwrap();
     tracker.record_connection("bob", None).unwrap();
-    let err = tracker.check_connection_rate("carol", &rate, &limits).unwrap_err();
+    let err = tracker
+        .check_connection_rate("carol", &rate, &limits)
+        .unwrap_err();
     assert!(err.contains("server connection rate limit"));
     assert!(err.contains("per-second"));
 }
@@ -223,7 +235,9 @@ fn server_per_minute_rate_limit() {
     tracker.record_connection("a", None).unwrap();
     tracker.record_connection("b", None).unwrap();
     tracker.record_connection("c", None).unwrap();
-    let err = tracker.check_connection_rate("d", &rate, &limits).unwrap_err();
+    let err = tracker
+        .check_connection_rate("d", &rate, &limits)
+        .unwrap_err();
     assert!(err.contains("server connection rate limit"));
     assert!(err.contains("per-minute"));
 }

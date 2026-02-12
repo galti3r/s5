@@ -37,11 +37,8 @@ pub async fn reload_config(State(state): State<AppState>) -> impl IntoResponse {
                     if let Some(ref audit) = state.audit {
                         audit.log_config_reload(0, false, Some(e.to_string()));
                     }
-                    ApiResponse::err(
-                        axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                        e.to_string(),
-                    )
-                    .into_response()
+                    ApiResponse::err(axum::http::StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+                        .into_response()
                 }
             }
         }
@@ -50,11 +47,8 @@ pub async fn reload_config(State(state): State<AppState>) -> impl IntoResponse {
             if let Some(ref audit) = state.audit {
                 audit.log_config_reload(0, false, Some(e.to_string()));
             }
-            ApiResponse::err(
-                axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-                e.to_string(),
-            )
-            .into_response()
+            ApiResponse::err(axum::http::StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+                .into_response()
         }
     }
 }

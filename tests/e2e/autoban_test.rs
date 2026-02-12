@@ -140,10 +140,7 @@ async fn test_autoban_triggers_after_threshold() {
     // 4th attempt: IP should be banned
     sleep(Duration::from_millis(100)).await;
     let result = attempt_auth(server.port, "alice", "wrong").await;
-    assert_eq!(
-        result, 0xFF,
-        "4th attempt should be rejected (IP banned)"
-    );
+    assert_eq!(result, 0xFF, "4th attempt should be rejected (IP banned)");
 }
 
 // ---------------------------------------------------------------------------

@@ -56,11 +56,8 @@ allow_forwarding = true
     // Now stall - don't send auth credentials. Server should timeout and close.
     let start = std::time::Instant::now();
     let mut buf = [0u8; 1];
-    let result = tokio::time::timeout(
-        std::time::Duration::from_secs(10),
-        stream.read(&mut buf),
-    )
-    .await;
+    let result =
+        tokio::time::timeout(std::time::Duration::from_secs(10), stream.read(&mut buf)).await;
     let elapsed = start.elapsed();
 
     // Connection should be closed by server within ~5s timeout (allow some margin)
@@ -70,7 +67,7 @@ allow_forwarding = true
         elapsed
     );
     match result {
-        Ok(Ok(0)) => {} // EOF = connection closed by server (expected)
+        Ok(Ok(0)) => {}  // EOF = connection closed by server (expected)
         Ok(Err(_)) => {} // Connection reset (also acceptable)
         other => panic!("expected connection close, got {:?}", other),
     }

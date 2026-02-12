@@ -117,8 +117,7 @@ impl IpReputationManager {
         self.scores
             .iter()
             .map(|entry| {
-                let score =
-                    Self::apply_decay(entry.score, entry.last_updated).max(0.0) as u32;
+                let score = Self::apply_decay(entry.score, entry.last_updated).max(0.0) as u32;
                 (*entry.key(), score)
             })
             .filter(|(_, s)| *s > 0)

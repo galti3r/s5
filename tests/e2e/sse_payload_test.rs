@@ -57,9 +57,7 @@ group = "team2"
 }
 
 /// Start the API server with a QuotaTracker attached, returning port and tracker handle.
-async fn start_api_with_quota(
-    config: s5::config::types::AppConfig,
-) -> (u16, Arc<QuotaTracker>) {
+async fn start_api_with_quota(config: s5::config::types::AppConfig) -> (u16, Arc<QuotaTracker>) {
     let api_addr = config.api.listen.clone();
     let port: u16 = api_addr.split(':').next_back().unwrap().parse().unwrap();
     let config = Arc::new(config);
@@ -84,12 +82,9 @@ async fn start_api_with_quota(
     };
 
     let _task = tokio::spawn(async move {
-        let _ = s5::api::start_api_server(
-            &api_addr,
-            state,
-            tokio_util::sync::CancellationToken::new(),
-        )
-        .await;
+        let _ =
+            s5::api::start_api_server(&api_addr, state, tokio_util::sync::CancellationToken::new())
+                .await;
     });
     tokio::time::sleep(std::time::Duration::from_millis(150)).await;
 
@@ -100,10 +95,9 @@ async fn start_api_with_quota(
 /// a `data: ` line, parse the JSON payload, and return it.
 /// Panics if no valid SSE data line is received within the timeout.
 async fn read_first_sse_event(port: u16, token: &str) -> serde_json::Value {
-    let mut stream =
-        tokio::net::TcpStream::connect(format!("127.0.0.1:{}", port))
-            .await
-            .expect("TCP connect to API server");
+    let mut stream = tokio::net::TcpStream::connect(format!("127.0.0.1:{}", port))
+        .await
+        .expect("TCP connect to API server");
 
     let request = format!(
         "GET /api/events HTTP/1.1\r\nHost: 127.0.0.1:{}\r\nAuthorization: Bearer {}\r\nAccept: text/event-stream\r\n\r\n",
@@ -124,10 +118,10 @@ async fn read_first_sse_event(port: u16, token: &str) -> serde_json::Value {
         }
 
         match tokio::time::timeout(remaining, stream.read(&mut buf)).await {
-            Ok(Ok(0)) => break,       // EOF
+            Ok(Ok(0)) => break, // EOF
             Ok(Ok(n)) => accumulated.extend_from_slice(&buf[..n]),
-            Ok(Err(_)) => break,       // read error
-            Err(_) => break,           // timeout
+            Ok(Err(_)) => break, // read error
+            Err(_) => break,     // timeout
         }
 
         // Check if we have a data line yet
@@ -154,9 +148,8 @@ async fn read_first_sse_event(port: u16, token: &str) -> serde_json::Value {
             )
         });
 
-    serde_json::from_str(json_str).unwrap_or_else(|e| {
-        panic!("failed to parse SSE JSON payload: {}\nraw: {}", e, json_str)
-    })
+    serde_json::from_str(json_str)
+        .unwrap_or_else(|e| panic!("failed to parse SSE JSON payload: {}\nraw: {}", e, json_str))
 }
 
 // ---------------------------------------------------------------------------

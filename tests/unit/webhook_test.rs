@@ -70,7 +70,10 @@ fn webhook_config_debug_redacts_secret() {
     let debug = format!("{:?}", config);
     assert!(debug.contains("example.com"));
     assert!(debug.contains("***"), "secret should be redacted");
-    assert!(!debug.contains("super-secret-key"), "secret value must not appear");
+    assert!(
+        !debug.contains("super-secret-key"),
+        "secret value must not appear"
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -193,18 +196,16 @@ async fn dispatcher_delivers_to_local_server() {
     tokio::spawn(async move {
         let app = axum::Router::new().route(
             "/hook",
-            axum::routing::post(
-                move |headers: axum::http::HeaderMap, body: String| {
-                    let recv = received_clone.clone();
-                    async move {
-                        let sig = headers
-                            .get("X-Signature-256")
-                            .map(|v| v.to_str().unwrap().to_string());
-                        recv.lock().await.push((body, sig));
-                        "ok"
-                    }
-                },
-            ),
+            axum::routing::post(move |headers: axum::http::HeaderMap, body: String| {
+                let recv = received_clone.clone();
+                async move {
+                    let sig = headers
+                        .get("X-Signature-256")
+                        .map(|v| v.to_str().unwrap().to_string());
+                    recv.lock().await.push((body, sig));
+                    "ok"
+                }
+            }),
         );
         axum::serve(listener, app).await.unwrap();
     });
@@ -239,7 +240,10 @@ async fn dispatcher_delivers_to_local_server() {
     assert_eq!(parsed["data"]["user"], "alice");
 
     // Verify HMAC signature
-    let sig_header = reqs[0].1.as_ref().expect("should have X-Signature-256 header");
+    let sig_header = reqs[0]
+        .1
+        .as_ref()
+        .expect("should have X-Signature-256 header");
     assert!(sig_header.starts_with("sha256="));
 
     // Recompute HMAC and compare

@@ -498,7 +498,12 @@ mod tests {
 
     #[test]
     fn test_parsed_acl_deny_first() {
-        let acl = ParsedAcl::from_config(AclPolicyConfig::Allow, &[], &["169.254.169.254:*".to_string()]).unwrap();
+        let acl = ParsedAcl::from_config(
+            AclPolicyConfig::Allow,
+            &[],
+            &["169.254.169.254:*".to_string()],
+        )
+        .unwrap();
 
         assert_eq!(
             acl.check(
@@ -516,7 +521,12 @@ mod tests {
 
     #[test]
     fn test_parsed_acl_deny_default() {
-        let acl = ParsedAcl::from_config(AclPolicyConfig::Deny, &["*.example.com:443".to_string()], &[]).unwrap();
+        let acl = ParsedAcl::from_config(
+            AclPolicyConfig::Deny,
+            &["*.example.com:443".to_string()],
+            &[],
+        )
+        .unwrap();
 
         assert_eq!(acl.check("foo.example.com", 443, None), AclPolicy::Allow);
         assert_eq!(acl.check("foo.example.com", 80, None), AclPolicy::Deny);
@@ -586,12 +596,8 @@ mod tests {
 
     #[test]
     fn test_check_hostname_verbose_deny() {
-        let acl = ParsedAcl::from_config(
-            AclPolicyConfig::Allow,
-            &[],
-            &["evil.com:*".to_string()],
-        )
-        .unwrap();
+        let acl = ParsedAcl::from_config(AclPolicyConfig::Allow, &[], &["evil.com:*".to_string()])
+            .unwrap();
 
         let (result, matched) = acl.check_hostname_verbose("evil.com", 80);
         assert_eq!(result, PreCheckResult::Deny);
@@ -600,12 +606,9 @@ mod tests {
 
     #[test]
     fn test_check_hostname_verbose_defer() {
-        let acl = ParsedAcl::from_config(
-            AclPolicyConfig::Allow,
-            &[],
-            &["10.0.0.0/8:*".to_string()],
-        )
-        .unwrap();
+        let acl =
+            ParsedAcl::from_config(AclPolicyConfig::Allow, &[], &["10.0.0.0/8:*".to_string()])
+                .unwrap();
 
         let (result, matched) = acl.check_hostname_verbose("example.com", 80);
         assert_eq!(result, PreCheckResult::Defer);

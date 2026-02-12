@@ -75,14 +75,29 @@ fn auth_failures_total_increments() {
     encode(&mut buf, &metrics.registry).unwrap();
 
     // Verify password failures appear with count 2
-    let password_line = buf.lines().find(|l| l.contains("auth_failures_total") && l.contains("password") && !l.starts_with('#'));
-    assert!(password_line.is_some(), "Should find password in auth failures");
-    assert!(password_line.unwrap().contains(" 2"), "Password should have count 2, got: {}", password_line.unwrap());
+    let password_line = buf.lines().find(|l| {
+        l.contains("auth_failures_total") && l.contains("password") && !l.starts_with('#')
+    });
+    assert!(
+        password_line.is_some(),
+        "Should find password in auth failures"
+    );
+    assert!(
+        password_line.unwrap().contains(" 2"),
+        "Password should have count 2, got: {}",
+        password_line.unwrap()
+    );
 
     // Verify pubkey failures appear with count 1
-    let pubkey_line = buf.lines().find(|l| l.contains("auth_failures_total") && l.contains("pubkey") && !l.starts_with('#'));
+    let pubkey_line = buf
+        .lines()
+        .find(|l| l.contains("auth_failures_total") && l.contains("pubkey") && !l.starts_with('#'));
     assert!(pubkey_line.is_some(), "Should find pubkey in auth failures");
-    assert!(pubkey_line.unwrap().contains(" 1"), "Pubkey should have count 1, got: {}", pubkey_line.unwrap());
+    assert!(
+        pubkey_line.unwrap().contains(" 1"),
+        "Pubkey should have count 1, got: {}",
+        pubkey_line.unwrap()
+    );
 }
 
 #[test]
@@ -97,13 +112,25 @@ fn auth_successes_increments_per_user() {
     encode(&mut buf, &metrics.registry).unwrap();
 
     // Verify alice appears with count 2 and bob with count 1
-    let alice_line = buf.lines().find(|l| l.contains("auth_successes_total") && l.contains("alice") && !l.starts_with('#'));
+    let alice_line = buf
+        .lines()
+        .find(|l| l.contains("auth_successes_total") && l.contains("alice") && !l.starts_with('#'));
     assert!(alice_line.is_some(), "Should find alice in auth successes");
-    assert!(alice_line.unwrap().contains(" 2"), "Alice should have count 2, got: {}", alice_line.unwrap());
+    assert!(
+        alice_line.unwrap().contains(" 2"),
+        "Alice should have count 2, got: {}",
+        alice_line.unwrap()
+    );
 
-    let bob_line = buf.lines().find(|l| l.contains("auth_successes_total") && l.contains("bob") && !l.starts_with('#'));
+    let bob_line = buf
+        .lines()
+        .find(|l| l.contains("auth_successes_total") && l.contains("bob") && !l.starts_with('#'));
     assert!(bob_line.is_some(), "Should find bob in auth successes");
-    assert!(bob_line.unwrap().contains(" 1"), "Bob should have count 1, got: {}", bob_line.unwrap());
+    assert!(
+        bob_line.unwrap().contains(" 1"),
+        "Bob should have count 1, got: {}",
+        bob_line.unwrap()
+    );
 }
 
 #[test]
@@ -118,10 +145,17 @@ fn bytes_transferred_accumulates() {
     encode(&mut buf, &metrics.registry).unwrap();
 
     // alice should have 3072 total
-    let alice_line = buf.lines().find(|l| l.contains("bytes_transferred") && l.contains("alice") && !l.starts_with('#'));
-    assert!(alice_line.is_some(), "Should find alice in bytes_transferred");
+    let alice_line = buf
+        .lines()
+        .find(|l| l.contains("bytes_transferred") && l.contains("alice") && !l.starts_with('#'));
+    assert!(
+        alice_line.is_some(),
+        "Should find alice in bytes_transferred"
+    );
 
-    let bob_line = buf.lines().find(|l| l.contains("bytes_transferred") && l.contains("bob") && !l.starts_with('#'));
+    let bob_line = buf
+        .lines()
+        .find(|l| l.contains("bytes_transferred") && l.contains("bob") && !l.starts_with('#'));
     assert!(bob_line.is_some(), "Should find bob in bytes_transferred");
 }
 
@@ -136,8 +170,14 @@ fn record_connection_rejected_tracks_reason() {
     let mut buf = String::new();
     encode(&mut buf, &metrics.registry).unwrap();
 
-    assert!(buf.contains("acl_denied"), "Should contain acl_denied reason");
-    assert!(buf.contains("rate_limited"), "Should contain rate_limited reason");
+    assert!(
+        buf.contains("acl_denied"),
+        "Should contain acl_denied reason"
+    );
+    assert!(
+        buf.contains("rate_limited"),
+        "Should contain rate_limited reason"
+    );
 }
 
 #[test]
@@ -150,7 +190,10 @@ fn record_http_request_tracks_method_path_status() {
     let mut buf = String::new();
     encode(&mut buf, &metrics.registry).unwrap();
 
-    assert!(buf.contains("http_requests_total"), "Should contain http_requests_total metric");
+    assert!(
+        buf.contains("http_requests_total"),
+        "Should contain http_requests_total metric"
+    );
     assert!(buf.contains("GET"), "Should contain GET method");
     assert!(buf.contains("POST"), "Should contain POST method");
 }
@@ -164,9 +207,18 @@ fn record_http_request_duration_creates_histogram() {
     let mut buf = String::new();
     encode(&mut buf, &metrics.registry).unwrap();
 
-    assert!(buf.contains("http_request_duration_seconds_bucket"), "Should contain histogram buckets");
-    assert!(buf.contains("http_request_duration_seconds_sum"), "Should contain histogram sum");
-    assert!(buf.contains("http_request_duration_seconds_count"), "Should contain histogram count");
+    assert!(
+        buf.contains("http_request_duration_seconds_bucket"),
+        "Should contain histogram buckets"
+    );
+    assert!(
+        buf.contains("http_request_duration_seconds_sum"),
+        "Should contain histogram sum"
+    );
+    assert!(
+        buf.contains("http_request_duration_seconds_count"),
+        "Should contain histogram count"
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -203,7 +255,11 @@ fn known_user_bypasses_cap() {
 
     // Cap is full, but alice is already known
     metrics.record_auth_success("alice", "password");
-    assert_eq!(metrics.cardinality_capped_total.get(), 0, "Known user should not trigger cap");
+    assert_eq!(
+        metrics.cardinality_capped_total.get(),
+        0,
+        "Known user should not trigger cap"
+    );
 }
 
 #[test]
@@ -331,16 +387,46 @@ fn prometheus_output_contains_all_registered_metrics() {
     encode(&mut buf, &metrics.registry).unwrap();
 
     // Verify key metric names are present in the output (as help/type lines)
-    assert!(buf.contains("s5_connections_active"), "Should contain connections_active");
-    assert!(buf.contains("s5_connections_total"), "Should contain connections_total");
-    assert!(buf.contains("s5_bytes_transferred"), "Should contain bytes_transferred");
-    assert!(buf.contains("s5_auth_failures_total"), "Should contain auth_failures_total");
-    assert!(buf.contains("s5_auth_successes_total"), "Should contain auth_successes_total");
-    assert!(buf.contains("s5_banned_ips_current"), "Should contain banned_ips_current");
-    assert!(buf.contains("s5_audit_events_dropped_total"), "Should contain audit_events_dropped");
-    assert!(buf.contains("s5_dns_cache_hits_total"), "Should contain dns_cache_hits");
-    assert!(buf.contains("s5_dns_cache_misses_total"), "Should contain dns_cache_misses");
-    assert!(buf.contains("s5_errors_total"), "Should contain errors_total");
+    assert!(
+        buf.contains("s5_connections_active"),
+        "Should contain connections_active"
+    );
+    assert!(
+        buf.contains("s5_connections_total"),
+        "Should contain connections_total"
+    );
+    assert!(
+        buf.contains("s5_bytes_transferred"),
+        "Should contain bytes_transferred"
+    );
+    assert!(
+        buf.contains("s5_auth_failures_total"),
+        "Should contain auth_failures_total"
+    );
+    assert!(
+        buf.contains("s5_auth_successes_total"),
+        "Should contain auth_successes_total"
+    );
+    assert!(
+        buf.contains("s5_banned_ips_current"),
+        "Should contain banned_ips_current"
+    );
+    assert!(
+        buf.contains("s5_audit_events_dropped_total"),
+        "Should contain audit_events_dropped"
+    );
+    assert!(
+        buf.contains("s5_dns_cache_hits_total"),
+        "Should contain dns_cache_hits"
+    );
+    assert!(
+        buf.contains("s5_dns_cache_misses_total"),
+        "Should contain dns_cache_misses"
+    );
+    assert!(
+        buf.contains("s5_errors_total"),
+        "Should contain errors_total"
+    );
 }
 
 #[test]
@@ -358,18 +444,45 @@ fn record_error_tracks_error_type() {
     let mut buf = String::new();
     encode(&mut buf, &metrics.registry).unwrap();
 
-    assert!(buf.contains("errors_total"), "Should contain errors_total metric");
-    assert!(buf.contains("connection_failed"), "Should contain connection_failed error_type");
-    assert!(buf.contains("dns_failed"), "Should contain dns_failed error_type");
-    assert!(buf.contains("acl_denied"), "Should contain acl_denied error_type");
-    assert!(buf.contains("auth_error"), "Should contain auth_error error_type");
-    assert!(buf.contains("relay_error"), "Should contain relay_error error_type");
-    assert!(buf.contains("quota_exceeded"), "Should contain quota_exceeded error_type");
+    assert!(
+        buf.contains("errors_total"),
+        "Should contain errors_total metric"
+    );
+    assert!(
+        buf.contains("connection_failed"),
+        "Should contain connection_failed error_type"
+    );
+    assert!(
+        buf.contains("dns_failed"),
+        "Should contain dns_failed error_type"
+    );
+    assert!(
+        buf.contains("acl_denied"),
+        "Should contain acl_denied error_type"
+    );
+    assert!(
+        buf.contains("auth_error"),
+        "Should contain auth_error error_type"
+    );
+    assert!(
+        buf.contains("relay_error"),
+        "Should contain relay_error error_type"
+    );
+    assert!(
+        buf.contains("quota_exceeded"),
+        "Should contain quota_exceeded error_type"
+    );
 
     // Verify connection_failed has count 2
-    let cf_line = buf.lines().find(|l| l.contains("errors_total") && l.contains("connection_failed") && !l.starts_with('#'));
+    let cf_line = buf.lines().find(|l| {
+        l.contains("errors_total") && l.contains("connection_failed") && !l.starts_with('#')
+    });
     assert!(cf_line.is_some(), "Should find connection_failed in errors");
-    assert!(cf_line.unwrap().contains(" 2"), "connection_failed should have count 2, got: {}", cf_line.unwrap());
+    assert!(
+        cf_line.unwrap().contains(" 2"),
+        "connection_failed should have count 2, got: {}",
+        cf_line.unwrap()
+    );
 }
 
 #[test]
@@ -388,14 +501,38 @@ fn auth_success_includes_method_label() {
     assert!(buf.contains("pubkey"), "Should contain pubkey method");
 
     // alice with password method should have count 1
-    let alice_pw = buf.lines().find(|l| l.contains("auth_successes_total") && l.contains("alice") && l.contains("password") && !l.starts_with('#'));
-    assert!(alice_pw.is_some(), "Should find alice+password in auth successes");
-    assert!(alice_pw.unwrap().ends_with(" 1"), "alice+password should have count 1, got: {}", alice_pw.unwrap());
+    let alice_pw = buf.lines().find(|l| {
+        l.contains("auth_successes_total")
+            && l.contains("alice")
+            && l.contains("password")
+            && !l.starts_with('#')
+    });
+    assert!(
+        alice_pw.is_some(),
+        "Should find alice+password in auth successes"
+    );
+    assert!(
+        alice_pw.unwrap().ends_with(" 1"),
+        "alice+password should have count 1, got: {}",
+        alice_pw.unwrap()
+    );
 
     // alice with pubkey method should have count 1
-    let alice_pk = buf.lines().find(|l| l.contains("auth_successes_total") && l.contains("alice") && l.contains("pubkey") && !l.starts_with('#'));
-    assert!(alice_pk.is_some(), "Should find alice+pubkey in auth successes");
-    assert!(alice_pk.unwrap().ends_with(" 1"), "alice+pubkey should have count 1, got: {}", alice_pk.unwrap());
+    let alice_pk = buf.lines().find(|l| {
+        l.contains("auth_successes_total")
+            && l.contains("alice")
+            && l.contains("pubkey")
+            && !l.starts_with('#')
+    });
+    assert!(
+        alice_pk.is_some(),
+        "Should find alice+pubkey in auth successes"
+    );
+    assert!(
+        alice_pk.unwrap().ends_with(" 1"),
+        "alice+pubkey should have count 1, got: {}",
+        alice_pk.unwrap()
+    );
 }
 
 #[test]
@@ -448,7 +585,10 @@ fn record_quota_bandwidth_creates_metric() {
     let mut buf = String::new();
     encode(&mut buf, &metrics.registry).unwrap();
 
-    assert!(buf.contains("quota_bandwidth_used_bytes"), "Should contain bandwidth quota metric");
+    assert!(
+        buf.contains("quota_bandwidth_used_bytes"),
+        "Should contain bandwidth quota metric"
+    );
     assert!(buf.contains("alice"), "Should contain alice label");
     assert!(buf.contains("hourly"), "Should contain hourly window");
     assert!(buf.contains("daily"), "Should contain daily window");
@@ -463,7 +603,10 @@ fn record_quota_connection_creates_metric() {
     let mut buf = String::new();
     encode(&mut buf, &metrics.registry).unwrap();
 
-    assert!(buf.contains("quota_connections_used"), "Should contain connection quota metric");
+    assert!(
+        buf.contains("quota_connections_used"),
+        "Should contain connection quota metric"
+    );
 }
 
 #[test]
@@ -476,7 +619,13 @@ fn record_quota_exceeded_creates_metric() {
     let mut buf = String::new();
     encode(&mut buf, &metrics.registry).unwrap();
 
-    assert!(buf.contains("quota_exceeded_total"), "Should contain quota exceeded metric");
+    assert!(
+        buf.contains("quota_exceeded_total"),
+        "Should contain quota exceeded metric"
+    );
     assert!(buf.contains("bandwidth"), "Should contain bandwidth type");
-    assert!(buf.contains("connections"), "Should contain connections type");
+    assert!(
+        buf.contains("connections"),
+        "Should contain connections type"
+    );
 }

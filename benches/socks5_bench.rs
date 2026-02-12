@@ -133,7 +133,10 @@ fn bench_udp_header_roundtrip(c: &mut Criterion) {
 
 fn bench_target_addr_host_string(c: &mut Criterion) {
     let ipv4 = TargetAddr::Ipv4([192, 168, 1, 1], 80);
-    let ipv6 = TargetAddr::Ipv6([0x20, 0x01, 0x0d, 0xb8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1], 443);
+    let ipv6 = TargetAddr::Ipv6(
+        [0x20, 0x01, 0x0d, 0xb8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        443,
+    );
     let domain = TargetAddr::Domain("example.com".to_string(), 443);
 
     let mut group = c.benchmark_group("target_addr_host_string");

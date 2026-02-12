@@ -156,8 +156,14 @@ async fn api_health_returns_json_with_details() {
     let data = &body["data"];
     assert_eq!(data["status"], "ok");
     assert_eq!(data["maintenance"], false);
-    assert!(data["active_connections"].is_number(), "active_connections must be a number");
-    assert!(data["uptime_secs"].is_number(), "uptime_secs must be a number");
+    assert!(
+        data["active_connections"].is_number(),
+        "active_connections must be a number"
+    );
+    assert!(
+        data["uptime_secs"].is_number(),
+        "uptime_secs must be a number"
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -274,7 +280,9 @@ async fn api_error_envelope() {
 
     // GET /api/quotas/:username → 404 when quota_tracker is None (default test config)
     let resp = client
-        .get(format!("http://127.0.0.1:{port}/api/quotas/nonexistent_user"))
+        .get(format!(
+            "http://127.0.0.1:{port}/api/quotas/nonexistent_user"
+        ))
         .header("Authorization", "Bearer test-token")
         .send()
         .await

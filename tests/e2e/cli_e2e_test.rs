@@ -127,7 +127,10 @@ fn test_init_creates_config() {
     );
 
     let content = std::fs::read_to_string(&out_path).expect("init output file should exist");
-    assert!(content.contains("[server]"), "config should contain [server]");
+    assert!(
+        content.contains("[server]"),
+        "config should contain [server]"
+    );
     assert!(
         content.contains("[[users]]"),
         "config should contain [[users]]"

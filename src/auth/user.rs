@@ -115,22 +115,21 @@ impl User {
         let parsed_authorized_keys = pubkey::parse_authorized_keys(&cfg.authorized_keys);
 
         // --- allow_forwarding: user explicit > group > user default (true) ---
-        let allow_forwarding = group_cfg
-            .and_then(|g| g.allow_forwarding)
-            .map_or(cfg.allow_forwarding, |group_val| {
-                // User config `allow_forwarding` defaults to true via serde;
-                // if group restricts it, group wins unless user explicitly sets it.
-                // Since serde always provides a value, we use the user's value directly
-                // (user config is authoritative when present).
-                cfg.allow_forwarding && group_val
-            });
+        let allow_forwarding =
+            group_cfg
+                .and_then(|g| g.allow_forwarding)
+                .map_or(cfg.allow_forwarding, |group_val| {
+                    // User config `allow_forwarding` defaults to true via serde;
+                    // if group restricts it, group wins unless user explicitly sets it.
+                    // Since serde always provides a value, we use the user's value directly
+                    // (user config is authoritative when present).
+                    cfg.allow_forwarding && group_val
+                });
 
         // --- allow_shell: same logic ---
         let allow_shell = group_cfg
             .and_then(|g| g.allow_shell)
-            .map_or(cfg.allow_shell, |group_val| {
-                cfg.allow_shell && group_val
-            });
+            .map_or(cfg.allow_shell, |group_val| cfg.allow_shell && group_val);
 
         // --- max_new_connections_per_minute: user > group > user default (0) ---
         let max_new_connections_per_minute = if cfg.max_new_connections_per_minute > 0 {
@@ -163,9 +162,7 @@ impl User {
         let role = if cfg.role != UserRole::default() {
             cfg.role
         } else {
-            group_cfg
-                .and_then(|g| g.role)
-                .unwrap_or(cfg.role)
+            group_cfg.and_then(|g| g.role).unwrap_or(cfg.role)
         };
 
         // --- shell_permissions: merge user > group > ShellPermissions::default() ---
@@ -608,10 +605,7 @@ mod tests {
         assert_eq!(user.max_aggregate_bandwidth_kbps, 10000);
         assert!(!user.shell_permissions.show_bandwidth);
         assert!(user.motd_config.is_some());
-        assert_eq!(
-            user.auth_methods,
-            Some(vec!["pubkey".to_string()])
-        );
+        assert_eq!(user.auth_methods, Some(vec!["pubkey".to_string()]));
         assert_eq!(user.idle_warning_secs, 30);
         assert!(!user.colors);
         assert_eq!(user.connect_retry, 5);

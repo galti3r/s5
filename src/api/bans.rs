@@ -48,12 +48,18 @@ pub async fn delete_ban(
 ) -> impl IntoResponse {
     let ip: IpAddr = match ip_str.parse() {
         Ok(ip) => ip,
-        Err(_) => return ApiResponse::err(StatusCode::BAD_REQUEST, "invalid IP address").into_response(),
+        Err(_) => {
+            return ApiResponse::err(StatusCode::BAD_REQUEST, "invalid IP address").into_response()
+        }
     };
 
     let security = state.security.read().await;
     if security.ban_manager().unban(&ip) {
-        ApiResponse::ok(UnbanResult { ip: ip_str, unbanned: true }).into_response()
+        ApiResponse::ok(UnbanResult {
+            ip: ip_str,
+            unbanned: true,
+        })
+        .into_response()
     } else {
         ApiResponse::err(StatusCode::NOT_FOUND, "IP not banned").into_response()
     }

@@ -101,7 +101,10 @@ fn api_config_debug_redacts_token() {
 
     let debug = format!("{:?}", api);
     assert!(debug.contains("***"), "token should be redacted in Debug");
-    assert!(!debug.contains("super-secret-api-token"), "token value must not appear");
+    assert!(
+        !debug.contains("super-secret-api-token"),
+        "token value must not appear"
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -194,7 +197,10 @@ password_hash = "argon2-secret-hash-value"
     let config: AppConfig = toml::from_str(&toml_str).unwrap();
     let debug = format!("{:?}", config.users[0]);
     assert!(debug.contains("***"), "password_hash should be redacted");
-    assert!(!debug.contains("argon2-secret-hash-value"), "hash must not appear in Debug");
+    assert!(
+        !debug.contains("argon2-secret-hash-value"),
+        "hash must not appear in Debug"
+    );
 }
 
 // ---------------------------------------------------------------------------

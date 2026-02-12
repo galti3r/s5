@@ -87,7 +87,10 @@ mod tests {
     #[test]
     fn test_paginated_response_first_page() {
         let items: Vec<Item> = (0..10)
-            .map(|i| Item { name: format!("item_{:02}", i), value: i })
+            .map(|i| Item {
+                name: format!("item_{:02}", i),
+                value: i,
+            })
             .collect();
         let resp = PaginatedResponse::from_sorted(items, None, 3, |i| i.name.clone());
         assert_eq!(resp.data.len(), 3);
@@ -98,7 +101,10 @@ mod tests {
     #[test]
     fn test_paginated_response_last_page() {
         let items: Vec<Item> = (0..3)
-            .map(|i| Item { name: format!("item_{:02}", i), value: i })
+            .map(|i| Item {
+                name: format!("item_{:02}", i),
+                value: i,
+            })
             .collect();
         let resp = PaginatedResponse::from_sorted(items, None, 5, |i| i.name.clone());
         assert_eq!(resp.data.len(), 3);
@@ -109,7 +115,10 @@ mod tests {
     #[test]
     fn test_paginated_response_with_cursor() {
         let items: Vec<Item> = (0..10)
-            .map(|i| Item { name: format!("item_{:02}", i), value: i })
+            .map(|i| Item {
+                name: format!("item_{:02}", i),
+                value: i,
+            })
             .collect();
         let resp = PaginatedResponse::from_sorted(items, Some("item_04"), 3, |i| i.name.clone());
         assert_eq!(resp.data.len(), 3);

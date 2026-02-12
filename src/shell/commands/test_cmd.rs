@@ -34,27 +34,15 @@ pub fn run(args: &[String], ctx: &ShellContext) -> CommandResult {
         AclPolicy::Allow => {
             let status = color(GREEN, "ALLOWED", colors);
             match matched_rule {
-                Some(rule) => format!(
-                    "{}:{} -> {} (rule: {})\r\n",
-                    host, port, status, rule
-                ),
-                None => format!(
-                    "{}:{} -> {} (default policy)\r\n",
-                    host, port, status
-                ),
+                Some(rule) => format!("{}:{} -> {} (rule: {})\r\n", host, port, status, rule),
+                None => format!("{}:{} -> {} (default policy)\r\n", host, port, status),
             }
         }
         AclPolicy::Deny => {
             let status = color(RED, "DENIED", colors);
             match matched_rule {
-                Some(rule) => format!(
-                    "{}:{} -> {} (rule: {})\r\n",
-                    host, port, status, rule
-                ),
-                None => format!(
-                    "{}:{} -> {} (default policy)\r\n",
-                    host, port, status
-                ),
+                Some(rule) => format!("{}:{} -> {} (rule: {})\r\n", host, port, status, rule),
+                None => format!("{}:{} -> {} (default policy)\r\n", host, port, status),
             }
         }
     };
@@ -87,10 +75,10 @@ fn parse_host_port(input: &str) -> Option<(&str, u16)> {
 
 #[cfg(test)]
 mod tests {
+    use super::super::test_helpers::make_test_ctx;
     use super::*;
     use crate::config::acl::ParsedAcl;
     use crate::config::types::AclPolicyConfig;
-    use super::super::test_helpers::make_test_ctx;
 
     fn make_ctx() -> ShellContext {
         let mut ctx = make_test_ctx();

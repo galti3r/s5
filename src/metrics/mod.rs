@@ -14,7 +14,10 @@ pub mod error_types {
     pub const INTERNAL_ERROR: &str = "internal_error";
 }
 
-use collectors::{AuthMethodLabel, AuthMethodUserLabel, ConnectionTypeUserLabel, ErrorTypeLabel, HttpDurationLabel, HttpRequestLabel, ReasonLabel, UserLabel, UserTypeLabel, UserWindowLabel};
+use collectors::{
+    AuthMethodLabel, AuthMethodUserLabel, ConnectionTypeUserLabel, ErrorTypeLabel,
+    HttpDurationLabel, HttpRequestLabel, ReasonLabel, UserLabel, UserTypeLabel, UserWindowLabel,
+};
 use dashmap::DashSet;
 use prometheus_client::metrics::counter::{Atomic as CounterAtomic, Counter};
 use prometheus_client::metrics::family::{Family, MetricConstructor};
@@ -53,7 +56,12 @@ pub struct ConnectionDurationHistogramBuilder;
 impl MetricConstructor<Histogram> for ConnectionDurationHistogramBuilder {
     fn new_metric(&self) -> Histogram {
         // Buckets: 0.1s, 0.5s, 1s, 5s, 10s, 30s, 60s, 300s (5m), 600s (10m), 1800s (30m), 3600s (1h)
-        Histogram::new([0.1, 0.5, 1.0, 5.0, 10.0, 30.0, 60.0, 300.0, 600.0, 1800.0, 3600.0].into_iter())
+        Histogram::new(
+            [
+                0.1, 0.5, 1.0, 5.0, 10.0, 30.0, 60.0, 300.0, 600.0, 1800.0, 3600.0,
+            ]
+            .into_iter(),
+        )
     }
 }
 
@@ -73,10 +81,12 @@ pub struct MetricsRegistry {
     pub quota_connections_used: Family<UserWindowLabel, Counter>,
     pub quota_exceeded_total: Family<UserTypeLabel, Counter>,
     pub connection_duration_seconds: Family<UserLabel, Histogram, DurationHistogramBuilder>,
-    pub connection_duration_by_type_seconds: Family<ConnectionTypeUserLabel, Histogram, ConnectionDurationHistogramBuilder>,
+    pub connection_duration_by_type_seconds:
+        Family<ConnectionTypeUserLabel, Histogram, ConnectionDurationHistogramBuilder>,
     pub connections_rejected_total: Family<ReasonLabel, Counter>,
     pub http_requests_total: Family<HttpRequestLabel, Counter>,
-    pub http_request_duration_seconds: Family<HttpDurationLabel, Histogram, HttpDurationHistogramBuilder>,
+    pub http_request_duration_seconds:
+        Family<HttpDurationLabel, Histogram, HttpDurationHistogramBuilder>,
     /// DNS cache hit counter (incremented in connector::connect_with_cache).
     pub dns_cache_hits_total: Counter,
     /// DNS cache miss counter (incremented in connector::connect_with_cache).
@@ -193,10 +203,13 @@ impl MetricsRegistry {
             connection_duration_seconds.clone(),
         );
 
-        let connection_duration_by_type_seconds =
-            Family::<ConnectionTypeUserLabel, Histogram, ConnectionDurationHistogramBuilder>::new_with_constructor(
-                ConnectionDurationHistogramBuilder,
-            );
+        let connection_duration_by_type_seconds = Family::<
+            ConnectionTypeUserLabel,
+            Histogram,
+            ConnectionDurationHistogramBuilder,
+        >::new_with_constructor(
+            ConnectionDurationHistogramBuilder
+        );
         registry.register(
             "s5_connection_duration_by_type_seconds",
             "Connection duration in seconds by connection type (ssh/socks5)",
@@ -217,10 +230,13 @@ impl MetricsRegistry {
             http_requests_total.clone(),
         );
 
-        let http_request_duration_seconds =
-            Family::<HttpDurationLabel, Histogram, HttpDurationHistogramBuilder>::new_with_constructor(
-                HttpDurationHistogramBuilder,
-            );
+        let http_request_duration_seconds = Family::<
+            HttpDurationLabel,
+            Histogram,
+            HttpDurationHistogramBuilder,
+        >::new_with_constructor(
+            HttpDurationHistogramBuilder
+        );
         registry.register(
             "s5_http_request_duration_seconds",
             "HTTP request duration in seconds",
@@ -328,9 +344,7 @@ impl MetricsRegistry {
     pub fn record_bytes_transferred(&self, username: &str, bytes: u64) {
         let label = self.resolve_label(username);
         self.bytes_transferred
-            .get_or_create(&UserLabel {
-                user: label,
-            })
+            .get_or_create(&UserLabel { user: label })
             .inner()
             .inc_by(bytes as f64);
     }
@@ -365,7 +379,12 @@ impl MetricsRegistry {
 
     /// Record connection duration with connection type label (ssh/socks5).
     /// Also records into the existing user-only histogram for backward compatibility.
-    pub fn record_typed_connection_duration(&self, username: &str, conn_type: &str, duration_secs: f64) {
+    pub fn record_typed_connection_duration(
+        &self,
+        username: &str,
+        conn_type: &str,
+        duration_secs: f64,
+    ) {
         let label = self.resolve_label(username);
         // Record into the type-labeled histogram
         self.connection_duration_by_type_seconds
@@ -453,7 +472,8 @@ impl MetricsRegistry {
     /// Remove stale users from the known_users set.
     /// Call after config reload to prevent unbounded growth.
     pub fn prune_known_users(&self, active_usernames: &[String]) {
-        let active_set: std::collections::HashSet<&str> = active_usernames.iter().map(|s| s.as_str()).collect();
+        let active_set: std::collections::HashSet<&str> =
+            active_usernames.iter().map(|s| s.as_str()).collect();
         self.known_users.retain(|u| active_set.contains(u.as_str()));
     }
 }

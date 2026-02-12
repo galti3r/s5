@@ -82,9 +82,18 @@ fn main() -> Result<()> {
             eprintln!("  Password:    {}", password);
             eprintln!();
             eprintln!("Connect with:");
-            eprintln!("  ssh -o StrictHostKeyChecking=no {}@localhost -p {}", username, ssh_listen.split(':').next_back().unwrap_or("2222"));
+            eprintln!(
+                "  ssh -o StrictHostKeyChecking=no {}@localhost -p {}",
+                username,
+                ssh_listen.split(':').next_back().unwrap_or("2222")
+            );
             if socks5_listen.is_some() {
-                eprintln!("  curl --socks5 {}:{}@{} http://example.com", username, password, socks5_listen.as_deref().unwrap_or("localhost:1080"));
+                eprintln!(
+                    "  curl --socks5 {}:{}@{} http://example.com",
+                    username,
+                    password,
+                    socks5_listen.as_deref().unwrap_or("localhost:1080")
+                );
             }
             eprintln!();
 
@@ -144,7 +153,10 @@ fn main() -> Result<()> {
                     "bastion" => config::presets::bastion_preset(username, &password_hash),
                     "proxy" => config::presets::proxy_preset(username, &password_hash),
                     "dev" => config::presets::dev_preset(username, &password_hash),
-                    _ => anyhow::bail!("unknown preset '{}' (available: bastion, proxy, dev)", preset_name),
+                    _ => anyhow::bail!(
+                        "unknown preset '{}' (available: bastion, proxy, dev)",
+                        preset_name
+                    ),
                 }
             } else {
                 generate_config_toml(

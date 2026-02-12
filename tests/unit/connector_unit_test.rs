@@ -31,8 +31,7 @@ async fn connect_port_zero_rejected_with_ip_guard() {
 #[tokio::test]
 async fn connect_with_cache_port_zero_rejected() {
     let dns_cache = s5::proxy::dns_cache::DnsCache::new(-1, 1000);
-    let result =
-        connector::connect_with_cache("example.com", 0, 5, false, &dns_cache, None).await;
+    let result = connector::connect_with_cache("example.com", 0, 5, false, &dns_cache, None).await;
     assert!(result.is_err());
     let err = result.unwrap_err().to_string();
     assert!(
@@ -228,7 +227,10 @@ async fn resolve_and_check_ipv6_loopback_blocked_by_ip_guard() {
 async fn resolve_and_check_ipv6_format_with_brackets() {
     // The code handles IPv6 by wrapping in brackets: [::1]:port
     let result = connector::resolve_and_check("::1", 80, 5, false).await;
-    assert!(result.is_ok(), "IPv6 resolution should work without ip_guard");
+    assert!(
+        result.is_ok(),
+        "IPv6 resolution should work without ip_guard"
+    );
 }
 
 // ===========================================================================
@@ -238,8 +240,7 @@ async fn resolve_and_check_ipv6_format_with_brackets() {
 #[tokio::test]
 async fn connect_with_cache_loopback_blocked_by_ip_guard() {
     let dns_cache = s5::proxy::dns_cache::DnsCache::new(-1, 1000);
-    let result =
-        connector::connect_with_cache("127.0.0.1", 80, 5, true, &dns_cache, None).await;
+    let result = connector::connect_with_cache("127.0.0.1", 80, 5, true, &dns_cache, None).await;
     assert!(result.is_err());
     let err = result.unwrap_err().to_string();
     assert!(

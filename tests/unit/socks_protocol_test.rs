@@ -1,8 +1,7 @@
 use s5::socks::protocol::{
     read_connect_request, read_greeting, read_request, SocksRequest, TargetAddr, UdpHeader,
-    ATYP_DOMAIN, ATYP_IPV4, ATYP_IPV6, AUTH_NONE, AUTH_PASSWORD, CMD_CONNECT,
-    CMD_UDP_ASSOCIATE, REPLY_ADDRESS_TYPE_NOT_SUPPORTED, REPLY_COMMAND_NOT_SUPPORTED,
-    SOCKS_VERSION,
+    ATYP_DOMAIN, ATYP_IPV4, ATYP_IPV6, AUTH_NONE, AUTH_PASSWORD, CMD_CONNECT, CMD_UDP_ASSOCIATE,
+    REPLY_ADDRESS_TYPE_NOT_SUPPORTED, REPLY_COMMAND_NOT_SUPPORTED, SOCKS_VERSION,
 };
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
@@ -86,7 +85,18 @@ fn test_udp_header_unsupported_atyp() {
 #[test]
 fn test_udp_header_domain_truncated() {
     // ATYP=domain, domain_len=10, but only 5 bytes of domain data follow
-    let data = [0x00, 0x00, 0x00, ATYP_DOMAIN, 10, b'h', b'e', b'l', b'l', b'o'];
+    let data = [
+        0x00,
+        0x00,
+        0x00,
+        ATYP_DOMAIN,
+        10,
+        b'h',
+        b'e',
+        b'l',
+        b'l',
+        b'o',
+    ];
     let result = UdpHeader::parse(&data);
     assert!(result.is_err());
     let err_msg = format!("{}", result.unwrap_err());
@@ -100,7 +110,18 @@ fn test_udp_header_domain_truncated() {
 #[test]
 fn test_udp_header_domain_invalid_utf8() {
     // Domain with invalid UTF-8 bytes, followed by a valid port
-    let data = [0x00, 0x00, 0x00, ATYP_DOMAIN, 3, 0xFF, 0xFE, 0xFD, 0x00, 0x50];
+    let data = [
+        0x00,
+        0x00,
+        0x00,
+        ATYP_DOMAIN,
+        3,
+        0xFF,
+        0xFE,
+        0xFD,
+        0x00,
+        0x50,
+    ];
     let result = UdpHeader::parse(&data);
     assert!(result.is_err());
     let err_msg = format!("{}", result.unwrap_err());
@@ -548,7 +569,18 @@ async fn test_read_request_connect_ipv4() {
     let (mut client, mut server) = tokio::io::duplex(1024);
     tokio::spawn(async move {
         client
-            .write_all(&[0x05, CMD_CONNECT, 0x00, ATYP_IPV4, 192, 168, 0, 1, 0x00, 0x50])
+            .write_all(&[
+                0x05,
+                CMD_CONNECT,
+                0x00,
+                ATYP_IPV4,
+                192,
+                168,
+                0,
+                1,
+                0x00,
+                0x50,
+            ])
             .await
             .unwrap();
         client.shutdown().await.unwrap();

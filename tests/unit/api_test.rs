@@ -131,10 +131,8 @@ fn api_response_ok_with_status_200() {
 
 #[test]
 fn api_response_ok_with_status_503_sets_success_false() {
-    let (status, json) = ApiResponse::ok_with_status(
-        axum::http::StatusCode::SERVICE_UNAVAILABLE,
-        "maintenance",
-    );
+    let (status, json) =
+        ApiResponse::ok_with_status(axum::http::StatusCode::SERVICE_UNAVAILABLE, "maintenance");
     assert_eq!(status, axum::http::StatusCode::SERVICE_UNAVAILABLE);
     assert!(!json.0.success, "503 should have success=false");
 
@@ -145,10 +143,7 @@ fn api_response_ok_with_status_503_sets_success_false() {
 
 #[test]
 fn api_response_err_returns_error_envelope() {
-    let (status, json) = ApiResponse::<()>::err(
-        axum::http::StatusCode::NOT_FOUND,
-        "not found",
-    );
+    let (status, json) = ApiResponse::<()>::err(axum::http::StatusCode::NOT_FOUND, "not found");
     assert_eq!(status, axum::http::StatusCode::NOT_FOUND);
     assert!(!json.0.success);
     assert!(json.0.data.is_none());
@@ -156,7 +151,10 @@ fn api_response_err_returns_error_envelope() {
     let serialized = serde_json::to_value(&json.0).unwrap();
     assert_eq!(serialized["success"], false);
     assert_eq!(serialized["error"], "not found");
-    assert!(serialized.get("data").is_none(), "data should be absent when None");
+    assert!(
+        serialized.get("data").is_none(),
+        "data should be absent when None"
+    );
 }
 
 #[test]
@@ -389,11 +387,7 @@ async fn auth_middleware_no_auth_header_rejected() {
         .await
         .unwrap();
 
-    assert_eq!(
-        resp.status(),
-        401,
-        "request without auth should return 401"
-    );
+    assert_eq!(resp.status(), 401, "request without auth should return 401");
 }
 
 // ---------------------------------------------------------------------------

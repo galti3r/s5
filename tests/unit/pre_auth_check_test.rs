@@ -4,10 +4,7 @@ use std::net::IpAddr;
 
 fn config_with_allowed_ips(ips: Vec<&str>) -> AppConfig {
     let mut config = default_config();
-    config.security.allowed_source_ips = ips
-        .into_iter()
-        .map(|s| s.parse().unwrap())
-        .collect();
+    config.security.allowed_source_ips = ips.into_iter().map(|s| s.parse().unwrap()).collect();
     config
 }
 
@@ -20,7 +17,7 @@ ssh_listen = "0.0.0.0:2222"
 [[users]]
 username = "test"
 password_hash = "argon2id-fake"
-"##
+"##,
     )
     .unwrap()
 }

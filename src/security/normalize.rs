@@ -4,7 +4,10 @@ use std::net::IpAddr;
 /// This prevents bypasses where `::ffff:127.0.0.1` is treated differently from `127.0.0.1`.
 pub fn normalize_ip(ip: IpAddr) -> IpAddr {
     match ip {
-        IpAddr::V6(v6) => v6.to_ipv4_mapped().map(IpAddr::V4).unwrap_or(IpAddr::V6(v6)),
+        IpAddr::V6(v6) => v6
+            .to_ipv4_mapped()
+            .map(IpAddr::V4)
+            .unwrap_or(IpAddr::V6(v6)),
         other => other,
     }
 }

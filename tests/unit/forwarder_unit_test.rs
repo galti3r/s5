@@ -279,7 +279,9 @@ async fn relay_with_bandwidth_limit_still_transfers_data() {
     };
 
     let handle = tokio::spawn(async move {
-        forwarder::relay(relay_client, relay_server, config).await.unwrap()
+        forwarder::relay(relay_client, relay_server, config)
+            .await
+            .unwrap()
     });
 
     client.write_all(b"throttled data").await.unwrap();
@@ -332,7 +334,9 @@ async fn relay_updates_session_byte_counters() {
     };
 
     let handle = tokio::spawn(async move {
-        forwarder::relay(relay_client, relay_server, config).await.unwrap()
+        forwarder::relay(relay_client, relay_server, config)
+            .await
+            .unwrap()
     });
 
     // Client sends 10 bytes
@@ -354,7 +358,9 @@ async fn relay_updates_session_byte_counters() {
         10
     );
     assert_eq!(
-        session.bytes_down.load(std::sync::atomic::Ordering::Relaxed),
+        session
+            .bytes_down
+            .load(std::sync::atomic::Ordering::Relaxed),
         5
     );
 }

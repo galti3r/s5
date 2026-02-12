@@ -67,7 +67,16 @@ async fn test_multiple_events_written_in_order() {
     logger.log_auth_success("alice", &source, "password").await;
     logger.log_auth_failure("bob", &source, "password").await;
     logger
-        .log_proxy_complete("alice", "example.org", 80, 1024, 1024, 200, &source, Some("93.184.216.34".to_string()))
+        .log_proxy_complete(
+            "alice",
+            "example.org",
+            80,
+            1024,
+            1024,
+            200,
+            &source,
+            Some("93.184.216.34".to_string()),
+        )
         .await;
 
     // Give time to write all events

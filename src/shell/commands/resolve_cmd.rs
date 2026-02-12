@@ -20,10 +20,7 @@ pub fn run(args: &[String], ctx: &ShellContext) -> CommandResult {
     let colors = ctx.colors;
     let mut output = String::new();
 
-    output.push_str(&format!(
-        "Resolving {}...\r\n",
-        color(CYAN, domain, colors)
-    ));
+    output.push_str(&format!("Resolving {}...\r\n", color(CYAN, domain, colors)));
 
     // Use port 0 for pure DNS lookup
     let addr_str = format!("{}:0", domain);
@@ -36,10 +33,7 @@ pub fn run(args: &[String], ctx: &ShellContext) -> CommandResult {
             ips.dedup();
 
             if ips.is_empty() {
-                output.push_str(&format!(
-                    "{}\r\n",
-                    color(RED, "No addresses found", colors)
-                ));
+                output.push_str(&format!("{}\r\n", color(RED, "No addresses found", colors)));
             } else {
                 output.push_str(&format!(
                     "Resolved {} address(es) in {:.1}ms:\r\n",
@@ -47,10 +41,7 @@ pub fn run(args: &[String], ctx: &ShellContext) -> CommandResult {
                     elapsed.as_secs_f64() * 1000.0
                 ));
                 for ip in &ips {
-                    output.push_str(&format!(
-                        "  {}\r\n",
-                        color(GREEN, ip, colors)
-                    ));
+                    output.push_str(&format!("  {}\r\n", color(GREEN, ip, colors)));
                 }
             }
         }
@@ -68,8 +59,8 @@ pub fn run(args: &[String], ctx: &ShellContext) -> CommandResult {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::test_helpers::make_test_ctx;
+    use super::*;
 
     fn make_ctx() -> ShellContext {
         make_test_ctx()
@@ -95,19 +86,18 @@ mod tests {
         let ctx = make_ctx();
         let result = run(&["localhost".to_string()], &ctx);
         assert!(result.output.contains("Resolving"));
-        assert!(
-            result.output.contains("Resolved") || result.output.contains("Resolution failed")
-        );
+        assert!(result.output.contains("Resolved") || result.output.contains("Resolution failed"));
     }
 
     #[test]
     fn test_resolve_invalid_domain() {
         let ctx = make_ctx();
-        let result = run(&["this-domain-definitely-does-not-exist-xyzzy.invalid".to_string()], &ctx);
+        let result = run(
+            &["this-domain-definitely-does-not-exist-xyzzy.invalid".to_string()],
+            &ctx,
+        );
         assert!(result.output.contains("Resolving"));
         // Should either fail or have no results
-        assert!(
-            result.output.contains("failed") || result.output.contains("No addresses")
-        );
+        assert!(result.output.contains("failed") || result.output.contains("No addresses"));
     }
 }

@@ -70,8 +70,7 @@ impl russh::server::Server for InternalSshServer {
     type Handler = SshHandler;
 
     fn new_client(&mut self, peer_addr: Option<std::net::SocketAddr>) -> SshHandler {
-        let peer = peer_addr
-            .unwrap_or_else(|| "0.0.0.0:0".parse().expect("valid fallback"));
+        let peer = peer_addr.unwrap_or_else(|| "0.0.0.0:0".parse().expect("valid fallback"));
         SshHandler::new(self.ctx.clone(), peer)
     }
 }
@@ -170,7 +169,9 @@ pub async fn start_api(config: AppConfig) -> TestApiServer {
     };
 
     let task = tokio::spawn(async move {
-        let _ = s5::api::start_api_server(&api_addr, state, tokio_util::sync::CancellationToken::new()).await;
+        let _ =
+            s5::api::start_api_server(&api_addr, state, tokio_util::sync::CancellationToken::new())
+                .await;
     });
 
     sleep(Duration::from_millis(100)).await;
@@ -180,7 +181,12 @@ pub async fn start_api(config: AppConfig) -> TestApiServer {
 /// Start the metrics/health server
 pub async fn start_metrics(config: AppConfig) -> (u16, tokio::task::JoinHandle<()>) {
     let metrics_addr = config.metrics.listen.clone();
-    let port: u16 = metrics_addr.split(':').next_back().unwrap().parse().unwrap();
+    let port: u16 = metrics_addr
+        .split(':')
+        .next_back()
+        .unwrap()
+        .parse()
+        .unwrap();
 
     let metrics = Arc::new(MetricsRegistry::new());
     let maintenance = Arc::new(std::sync::atomic::AtomicBool::new(false));
@@ -188,7 +194,13 @@ pub async fn start_metrics(config: AppConfig) -> (u16, tokio::task::JoinHandle<(
     let m = metrics.clone();
     let maint = maintenance.clone();
     let task = tokio::spawn(async move {
-        let _ = s5::api::start_metrics_server(&metrics_addr, m, maint, tokio_util::sync::CancellationToken::new()).await;
+        let _ = s5::api::start_metrics_server(
+            &metrics_addr,
+            m,
+            maint,
+            tokio_util::sync::CancellationToken::new(),
+        )
+        .await;
     });
 
     sleep(Duration::from_millis(100)).await;
@@ -231,11 +243,7 @@ allow_shell = true
 }
 
 /// Build a config for SSH tests with multiple users
-pub fn ssh_config_multi_user(
-    ssh_port: u16,
-    user1_hash: &str,
-    user2_hash: &str,
-) -> AppConfig {
+pub fn ssh_config_multi_user(ssh_port: u16, user1_hash: &str, user2_hash: &str) -> AppConfig {
     let toml_str = format!(
         r##"
 [server]

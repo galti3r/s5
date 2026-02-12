@@ -85,10 +85,7 @@ async fn test_acl_combined_allow_rules() {
     let config = acl_config(
         ssh_port,
         &hash,
-        &[
-            &format!("127.0.0.1:{}", echo_port),
-            "127.0.0.0/8:*",
-        ],
+        &[&format!("127.0.0.1:{}", echo_port), "127.0.0.0/8:*"],
         &[],
         "deny",
     );

@@ -153,7 +153,12 @@ impl AuditEvent {
         }
     }
 
-    pub fn auth_success_with_cid(username: &str, source: &SocketAddr, method: &str, cid: &str) -> Self {
+    pub fn auth_success_with_cid(
+        username: &str,
+        source: &SocketAddr,
+        method: &str,
+        cid: &str,
+    ) -> Self {
         Self::AuthSuccess {
             timestamp: Utc::now(),
             correlation_id: Some(cid.to_string()),
@@ -173,7 +178,12 @@ impl AuditEvent {
         }
     }
 
-    pub fn auth_failure_with_cid(username: &str, source: &SocketAddr, method: &str, cid: &str) -> Self {
+    pub fn auth_failure_with_cid(
+        username: &str,
+        source: &SocketAddr,
+        method: &str,
+        cid: &str,
+    ) -> Self {
         Self::AuthFailure {
             timestamp: Utc::now(),
             correlation_id: Some(cid.to_string()),
@@ -327,7 +337,12 @@ impl AuditEvent {
         }
     }
 
-    pub fn quota_exceeded(username: &str, quota_type: &str, current_usage: u64, limit: u64) -> Self {
+    pub fn quota_exceeded(
+        username: &str,
+        quota_type: &str,
+        current_usage: u64,
+        limit: u64,
+    ) -> Self {
         Self::QuotaExceeded {
             timestamp: Utc::now(),
             correlation_id: None,
@@ -338,7 +353,13 @@ impl AuditEvent {
         }
     }
 
-    pub fn quota_exceeded_with_cid(username: &str, quota_type: &str, current_usage: u64, limit: u64, cid: &str) -> Self {
+    pub fn quota_exceeded_with_cid(
+        username: &str,
+        quota_type: &str,
+        current_usage: u64,
+        limit: u64,
+        cid: &str,
+    ) -> Self {
         Self::QuotaExceeded {
             timestamp: Utc::now(),
             correlation_id: Some(cid.to_string()),
@@ -349,7 +370,12 @@ impl AuditEvent {
         }
     }
 
-    pub fn session_authenticated(username: &str, source: &SocketAddr, protocol: &str, method: &str) -> Self {
+    pub fn session_authenticated(
+        username: &str,
+        source: &SocketAddr,
+        protocol: &str,
+        method: &str,
+    ) -> Self {
         Self::SessionAuthenticated {
             timestamp: Utc::now(),
             correlation_id: None,
@@ -360,7 +386,13 @@ impl AuditEvent {
         }
     }
 
-    pub fn session_authenticated_with_cid(username: &str, source: &SocketAddr, protocol: &str, method: &str, cid: &str) -> Self {
+    pub fn session_authenticated_with_cid(
+        username: &str,
+        source: &SocketAddr,
+        protocol: &str,
+        method: &str,
+        cid: &str,
+    ) -> Self {
         Self::SessionAuthenticated {
             timestamp: Utc::now(),
             correlation_id: Some(cid.to_string()),
@@ -371,7 +403,13 @@ impl AuditEvent {
         }
     }
 
-    pub fn session_ended(username: &str, source: &SocketAddr, protocol: &str, duration_secs: u64, total_bytes: u64) -> Self {
+    pub fn session_ended(
+        username: &str,
+        source: &SocketAddr,
+        protocol: &str,
+        duration_secs: u64,
+        total_bytes: u64,
+    ) -> Self {
         Self::SessionEnded {
             timestamp: Utc::now(),
             correlation_id: None,
@@ -383,7 +421,14 @@ impl AuditEvent {
         }
     }
 
-    pub fn session_ended_with_cid(username: &str, source: &SocketAddr, protocol: &str, duration_secs: u64, total_bytes: u64, cid: &str) -> Self {
+    pub fn session_ended_with_cid(
+        username: &str,
+        source: &SocketAddr,
+        protocol: &str,
+        duration_secs: u64,
+        total_bytes: u64,
+        cid: &str,
+    ) -> Self {
         Self::SessionEnded {
             timestamp: Utc::now(),
             correlation_id: Some(cid.to_string()),
@@ -405,7 +450,12 @@ impl AuditEvent {
         }
     }
 
-    pub fn rate_limit_exceeded_with_cid(username: &str, source: &SocketAddr, limit_type: &str, cid: &str) -> Self {
+    pub fn rate_limit_exceeded_with_cid(
+        username: &str,
+        source: &SocketAddr,
+        limit_type: &str,
+        cid: &str,
+    ) -> Self {
         Self::RateLimitExceeded {
             timestamp: Utc::now(),
             correlation_id: Some(cid.to_string()),

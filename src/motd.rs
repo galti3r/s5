@@ -91,8 +91,10 @@ fn is_within_7_days(iso: &str) -> bool {
     let remaining_secs = now_secs % 31_557_600;
     let now_month = 1 + remaining_secs / 2_629_800; // average seconds per month
     let now_day = 1 + (remaining_secs % 2_629_800) / 86400;
-    let now_days =
-        now_year * 365 + (now_year / 4) - (now_year / 100) + (now_year / 400) + now_month * 30 + now_day;
+    let now_days = now_year * 365 + (now_year / 4) - (now_year / 100)
+        + (now_year / 400)
+        + now_month * 30
+        + now_day;
 
     let diff = expire_days - now_days;
     (0..=7).contains(&diff)
@@ -276,7 +278,7 @@ mod tests {
             connections: 3,
             acl_policy: "allow".to_string(),
             expires_at: Some("2099-12-31T23:59:59Z".to_string()),
-            bandwidth_used: 1_073_741_824, // 1 GB
+            bandwidth_used: 1_073_741_824,   // 1 GB
             bandwidth_limit: 10_737_418_240, // 10 GB
             last_login: Some("2026-01-15T08:30:00Z".to_string()),
             uptime: 90061, // 1d 1h 1m 1s
@@ -541,8 +543,7 @@ mod tests {
             template: Some("User".to_string()),
             colors: true,
         };
-        let (enabled, template, colors) =
-            resolve_motd_config(&global, Some(&group), Some(&user));
+        let (enabled, template, colors) = resolve_motd_config(&global, Some(&group), Some(&user));
         assert!(enabled);
         assert_eq!(template, Some("User".to_string()));
         assert!(colors);

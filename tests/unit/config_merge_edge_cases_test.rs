@@ -291,7 +291,11 @@ fn no_group_merges_only_global_and_user() {
     assert_eq!(acl.default_policy, AclPolicy::Deny);
     // Global deny should still apply
     assert_eq!(
-        acl.check("169.254.169.254", 80, Some("169.254.169.254".parse().unwrap())),
+        acl.check(
+            "169.254.169.254",
+            80,
+            Some("169.254.169.254".parse().unwrap())
+        ),
         AclPolicy::Deny
     );
     // User allow should work
@@ -401,12 +405,8 @@ fn invalid_group_deny_rule_returns_error() {
 
 #[test]
 fn precheck_literal_ip_matches_cidr_deny_immediately() {
-    let acl = ParsedAcl::from_config(
-        AclPolicyConfig::Allow,
-        &[],
-        &["10.0.0.0/8:*".to_string()],
-    )
-    .unwrap();
+    let acl =
+        ParsedAcl::from_config(AclPolicyConfig::Allow, &[], &["10.0.0.0/8:*".to_string()]).unwrap();
 
     // Literal IP that matches CIDR should be denied at pre-check
     let result = acl.check_hostname_only("10.1.2.3", 80);
@@ -415,12 +415,8 @@ fn precheck_literal_ip_matches_cidr_deny_immediately() {
 
 #[test]
 fn precheck_hostname_defers_for_cidr_only_rules() {
-    let acl = ParsedAcl::from_config(
-        AclPolicyConfig::Allow,
-        &[],
-        &["10.0.0.0/8:*".to_string()],
-    )
-    .unwrap();
+    let acl =
+        ParsedAcl::from_config(AclPolicyConfig::Allow, &[], &["10.0.0.0/8:*".to_string()]).unwrap();
 
     // Hostname (not a literal IP) should defer to post-check
     let result = acl.check_hostname_only("example.com", 80);

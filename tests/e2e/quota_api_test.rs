@@ -2,8 +2,8 @@
 mod helpers;
 
 use helpers::*;
-use s5::auth::AuthService;
 use s5::audit::AuditLogger;
+use s5::auth::AuthService;
 use s5::config::types::{QuotaConfig, RateLimitsConfig};
 use s5::metrics::MetricsRegistry;
 use s5::proxy::ProxyEngine;
@@ -65,12 +65,9 @@ async fn start_api_with_quota(config: s5::config::types::AppConfig) -> (u16, Arc
     };
 
     let _task = tokio::spawn(async move {
-        let _ = s5::api::start_api_server(
-            &api_addr,
-            state,
-            tokio_util::sync::CancellationToken::new(),
-        )
-        .await;
+        let _ =
+            s5::api::start_api_server(&api_addr, state, tokio_util::sync::CancellationToken::new())
+                .await;
     });
     tokio::time::sleep(std::time::Duration::from_millis(100)).await;
 

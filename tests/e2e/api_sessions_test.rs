@@ -13,9 +13,7 @@ use tokio::sync::RwLock;
 
 /// Start the API server and return both the port and the ProxyEngine handle,
 /// so tests can register sessions directly on the engine.
-async fn start_api_with_engine(
-    config: s5::config::types::AppConfig,
-) -> (u16, Arc<ProxyEngine>) {
+async fn start_api_with_engine(config: s5::config::types::AppConfig) -> (u16, Arc<ProxyEngine>) {
     let api_addr = config.api.listen.clone();
     let port: u16 = api_addr.split(':').next_back().unwrap().parse().unwrap();
     let config = Arc::new(config);
@@ -39,12 +37,9 @@ async fn start_api_with_engine(
     };
 
     let _task = tokio::spawn(async move {
-        let _ = s5::api::start_api_server(
-            &api_addr,
-            state,
-            tokio_util::sync::CancellationToken::new(),
-        )
-        .await;
+        let _ =
+            s5::api::start_api_server(&api_addr, state, tokio_util::sync::CancellationToken::new())
+                .await;
     });
 
     tokio::time::sleep(std::time::Duration::from_millis(100)).await;
@@ -159,13 +154,7 @@ async fn test_sessions_list_with_registered_session() {
     let (port, engine) = start_api_with_engine(config).await;
 
     // Register a session directly on the proxy engine
-    let session = engine.register_session(
-        "alice",
-        "example.com",
-        8080,
-        "192.168.1.42",
-        "socks5",
-    );
+    let session = engine.register_session("alice", "example.com", 8080, "192.168.1.42", "socks5");
     let expected_id = session.session_id.clone();
 
     let client = reqwest::Client::new();
@@ -192,10 +181,22 @@ async fn test_sessions_list_with_registered_session() {
     assert_eq!(s["target_port"], 8080);
     assert_eq!(s["source_ip"], "192.168.1.42");
     assert_eq!(s["protocol"], "socks5");
-    assert!(s["started_at"].as_str().is_some(), "started_at should be a string");
-    assert!(s["bytes_up"].as_u64().is_some(), "bytes_up should be a number");
-    assert!(s["bytes_down"].as_u64().is_some(), "bytes_down should be a number");
-    assert!(s["duration_secs"].as_u64().is_some(), "duration_secs should be a number");
+    assert!(
+        s["started_at"].as_str().is_some(),
+        "started_at should be a string"
+    );
+    assert!(
+        s["bytes_up"].as_u64().is_some(),
+        "bytes_up should be a number"
+    );
+    assert!(
+        s["bytes_down"].as_u64().is_some(),
+        "bytes_down should be a number"
+    );
+    assert!(
+        s["duration_secs"].as_u64().is_some(),
+        "duration_secs should be a number"
+    );
 
     // Initially bytes should be zero
     assert_eq!(s["bytes_up"].as_u64().unwrap(), 0);

@@ -1,9 +1,5 @@
 use crate::api::{ApiResponse, AppState};
-use axum::{
-    extract::State,
-    response::IntoResponse,
-    Json,
-};
+use axum::{extract::State, response::IntoResponse, Json};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -99,7 +95,14 @@ pub async fn restore_handler(
     // Restore quotas
     if let Some(ref qt) = state.quota_tracker {
         for (username, usage) in &payload.quotas {
-            qt.restore_user_usage(username, usage.daily_bytes, usage.daily_connections, usage.monthly_bytes, usage.monthly_connections, usage.total_bytes);
+            qt.restore_user_usage(
+                username,
+                usage.daily_bytes,
+                usage.daily_connections,
+                usage.monthly_bytes,
+                usage.monthly_connections,
+                usage.total_bytes,
+            );
             restored_quotas += 1;
         }
     }

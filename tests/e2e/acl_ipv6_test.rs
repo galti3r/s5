@@ -130,13 +130,7 @@ async fn test_acl_ipv6_subnet_deny() {
     let hash = hash_pass("pass");
 
     // Deny all of ::1/128
-    let config = acl_config(
-        ssh_port,
-        &hash,
-        &[],
-        &["[::1]:*"],
-        "allow",
-    );
+    let config = acl_config(ssh_port, &hash, &[], &["[::1]:*"], "allow");
     let _server = start_ssh(config).await;
 
     let client_config = Arc::new(russh::client::Config::default());

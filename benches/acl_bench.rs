@@ -39,9 +39,7 @@ fn bench_acl_check_10_rules(c: &mut Criterion) {
     let allow: Vec<String> = (0..5)
         .map(|i| format!("host{}.example.com:443", i))
         .collect();
-    let deny: Vec<String> = (0..5)
-        .map(|i| format!("bad{}.example.com:*", i))
-        .collect();
+    let deny: Vec<String> = (0..5).map(|i| format!("bad{}.example.com:*", i)).collect();
     let acl = ParsedAcl::from_config(AclPolicyConfig::Deny, &allow, &deny).unwrap();
     c.bench_function("acl_check_10_rules", |b| {
         b.iter(|| {
@@ -58,9 +56,7 @@ fn bench_acl_check_100_rules(c: &mut Criterion) {
     let allow: Vec<String> = (0..50)
         .map(|i| format!("host{}.example.com:443", i))
         .collect();
-    let deny: Vec<String> = (0..50)
-        .map(|i| format!("bad{}.example.com:*", i))
-        .collect();
+    let deny: Vec<String> = (0..50).map(|i| format!("bad{}.example.com:*", i)).collect();
     let acl = ParsedAcl::from_config(AclPolicyConfig::Deny, &allow, &deny).unwrap();
     c.bench_function("acl_check_100_rules", |b| {
         b.iter(|| {
@@ -91,10 +87,7 @@ fn bench_acl_check_cidr(c: &mut Criterion) {
 
 fn bench_acl_check_hostname_only(c: &mut Criterion) {
     let allow = vec!["*.example.com:443".to_string()];
-    let deny = vec![
-        "evil.com:*".to_string(),
-        "10.0.0.0/8:*".to_string(),
-    ];
+    let deny = vec!["evil.com:*".to_string(), "10.0.0.0/8:*".to_string()];
     let acl = ParsedAcl::from_config(AclPolicyConfig::Deny, &allow, &deny).unwrap();
     c.bench_function("acl_check_hostname_only", |b| {
         b.iter(|| {
@@ -107,9 +100,7 @@ fn bench_acl_check_verbose(c: &mut Criterion) {
     let allow: Vec<String> = (0..20)
         .map(|i| format!("host{}.example.com:443", i))
         .collect();
-    let deny: Vec<String> = (0..20)
-        .map(|i| format!("bad{}.example.com:*", i))
-        .collect();
+    let deny: Vec<String> = (0..20).map(|i| format!("bad{}.example.com:*", i)).collect();
     let acl = ParsedAcl::from_config(AclPolicyConfig::Deny, &allow, &deny).unwrap();
     c.bench_function("acl_check_verbose", |b| {
         b.iter(|| {

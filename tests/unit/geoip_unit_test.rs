@@ -29,20 +29,20 @@ fn disabled_geoip_allows_even_with_deny_list() {
         false,
     );
     let ip: IpAddr = "10.0.0.1".parse().unwrap();
-    assert!(svc.is_allowed(&ip), "disabled GeoIP should ignore deny lists");
+    assert!(
+        svc.is_allowed(&ip),
+        "disabled GeoIP should ignore deny lists"
+    );
 }
 
 #[test]
 fn disabled_geoip_allows_even_with_allow_list() {
-    let svc = GeoIpService::new(
-        false,
-        None,
-        vec!["US".to_string()],
-        vec![],
-        false,
-    );
+    let svc = GeoIpService::new(false, None, vec!["US".to_string()], vec![], false);
     let ip: IpAddr = "10.0.0.1".parse().unwrap();
-    assert!(svc.is_allowed(&ip), "disabled GeoIP should ignore allow lists");
+    assert!(
+        svc.is_allowed(&ip),
+        "disabled GeoIP should ignore allow lists"
+    );
 }
 
 #[test]
@@ -66,14 +66,20 @@ fn disabled_geoip_allows_even_with_both_lists() {
 fn enabled_no_db_path_allows_all_when_fail_open() {
     let svc = GeoIpService::new(true, None, vec!["US".to_string()], vec![], false);
     let ip: IpAddr = "1.2.3.4".parse().unwrap();
-    assert!(svc.is_allowed(&ip), "no reader + fail_closed=false should allow");
+    assert!(
+        svc.is_allowed(&ip),
+        "no reader + fail_closed=false should allow"
+    );
 }
 
 #[test]
 fn enabled_no_db_path_denies_all_when_fail_closed() {
     let svc = GeoIpService::new(true, None, vec!["US".to_string()], vec![], true);
     let ip: IpAddr = "1.2.3.4".parse().unwrap();
-    assert!(!svc.is_allowed(&ip), "no reader + fail_closed=true should deny");
+    assert!(
+        !svc.is_allowed(&ip),
+        "no reader + fail_closed=true should deny"
+    );
 }
 
 #[test]
@@ -86,7 +92,10 @@ fn enabled_bad_db_path_allows_all_when_fail_open() {
         false,
     );
     let ip: IpAddr = "203.0.113.1".parse().unwrap();
-    assert!(svc.is_allowed(&ip), "bad path + fail_closed=false should allow");
+    assert!(
+        svc.is_allowed(&ip),
+        "bad path + fail_closed=false should allow"
+    );
 }
 
 #[test]
@@ -99,7 +108,10 @@ fn enabled_bad_db_path_denies_all_when_fail_closed() {
         true,
     );
     let ip: IpAddr = "203.0.113.1".parse().unwrap();
-    assert!(!svc.is_allowed(&ip), "bad path + fail_closed=true should deny");
+    assert!(
+        !svc.is_allowed(&ip),
+        "bad path + fail_closed=true should deny"
+    );
 }
 
 // ===========================================================================
@@ -146,9 +158,15 @@ fn disabled_geoip_ignores_fail_closed() {
 
     let ip: IpAddr = "8.8.8.8".parse().unwrap();
 
-    assert!(svc_open.is_allowed(&ip), "disabled + fail_open should allow");
+    assert!(
+        svc_open.is_allowed(&ip),
+        "disabled + fail_open should allow"
+    );
     // When disabled, reader is None, so fail_closed applies
-    assert!(!svc_closed.is_allowed(&ip), "disabled + fail_closed denies (no reader)");
+    assert!(
+        !svc_closed.is_allowed(&ip),
+        "disabled + fail_closed denies (no reader)"
+    );
 }
 
 // ===========================================================================

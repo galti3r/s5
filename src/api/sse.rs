@@ -77,22 +77,21 @@ struct BanInfo {
     expires_at: Option<String>,
 }
 
-pub async fn sse_events(
-    State(state): State<AppState>,
-) -> impl IntoResponse {
+pub async fn sse_events(State(state): State<AppState>) -> impl IntoResponse {
     // API-001: Auth is handled by the router middleware (Bearer header or HMAC ticket).
     // No duplicate auth check needed here.
 
-    let stream = tokio_stream::wrappers::IntervalStream::new(tokio::time::interval(Duration::from_secs(2)))
-        .map(move |_| {
-            let state = state.clone();
-            async move {
-                let payload = build_payload(&state).await;
-                let json = serde_json::to_string(&payload).unwrap_or_default();
-                Ok::<_, Infallible>(Event::default().data(json))
-            }
-        })
-        .then(|fut| fut);
+    let stream =
+        tokio_stream::wrappers::IntervalStream::new(tokio::time::interval(Duration::from_secs(2)))
+            .map(move |_| {
+                let state = state.clone();
+                async move {
+                    let payload = build_payload(&state).await;
+                    let json = serde_json::to_string(&payload).unwrap_or_default();
+                    Ok::<_, Infallible>(Event::default().data(json))
+                }
+            })
+            .then(|fut| fut);
 
     Sse::new(stream)
         .keep_alive(
@@ -172,7 +171,11 @@ async fn build_payload(state: &AppState) -> SsePayload {
         .iter()
         .filter_map(|u| {
             let c = state.proxy_engine.user_connections(u);
-            if c > 0 { Some((u.clone(), c)) } else { None }
+            if c > 0 {
+                Some((u.clone(), c))
+            } else {
+                None
+            }
         })
         .collect();
 
@@ -199,19 +202,22 @@ async fn build_payload(state: &AppState) -> SsePayload {
     let session_snapshots = state.proxy_engine.get_sessions();
     let sessions = SseSessionSummary {
         total_active: session_snapshots.len(),
-        sessions: session_snapshots.into_iter().map(|s| {
-            let duration = chrono::Utc::now().signed_duration_since(s.started_at);
-            SseSessionInfo {
-                session_id: s.session_id,
-                username: s.username,
-                target_host: s.target_host,
-                target_port: s.target_port,
-                bytes_up: s.bytes_up,
-                bytes_down: s.bytes_down,
-                duration_secs: duration.num_seconds().max(0) as u64,
-                protocol: s.protocol,
-            }
-        }).collect(),
+        sessions: session_snapshots
+            .into_iter()
+            .map(|s| {
+                let duration = chrono::Utc::now().signed_duration_since(s.started_at);
+                SseSessionInfo {
+                    session_id: s.session_id,
+                    username: s.username,
+                    target_host: s.target_host,
+                    target_port: s.target_port,
+                    bytes_up: s.bytes_up,
+                    bytes_down: s.bytes_down,
+                    duration_secs: duration.num_seconds().max(0) as u64,
+                    protocol: s.protocol,
+                }
+            })
+            .collect(),
     };
 
     SsePayload {

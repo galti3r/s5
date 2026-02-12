@@ -107,12 +107,8 @@ impl AlertEngine {
             AlertCondition::ConnectionsExceeded => {
                 Self::connections_for_window(&usage, rule.window_secs) > rule.threshold
             }
-            AlertCondition::MonthlyBandwidthExceeded => {
-                usage.monthly_bytes > rule.threshold
-            }
-            AlertCondition::HourlyBandwidthExceeded => {
-                usage.hourly_bytes > rule.threshold
-            }
+            AlertCondition::MonthlyBandwidthExceeded => usage.monthly_bytes > rule.threshold,
+            AlertCondition::HourlyBandwidthExceeded => usage.hourly_bytes > rule.threshold,
             AlertCondition::AuthFailures => {
                 // Auth failures are server-wide, not per-user.
                 // The same counter is checked for every user in the rule's scope.
@@ -232,7 +228,9 @@ mod tests {
         };
         let engine = AlertEngine::new(config, None, tracker);
         engine.evaluate(&["alice".to_string()]);
-        assert!(engine.fired_alerts.contains(&"high_bandwidth:alice".to_string()));
+        assert!(engine
+            .fired_alerts
+            .contains(&"high_bandwidth:alice".to_string()));
     }
 
     #[test]
@@ -393,7 +391,9 @@ mod tests {
         };
         let engine = AlertEngine::new(config, None, tracker);
         engine.evaluate(&["alice".to_string()]);
-        assert!(engine.fired_alerts.contains(&"monthly_bw:alice".to_string()));
+        assert!(engine
+            .fired_alerts
+            .contains(&"monthly_bw:alice".to_string()));
     }
 
     #[test]
@@ -418,7 +418,9 @@ mod tests {
         let engine = AlertEngine::new(config, None, tracker);
         engine.evaluate(&["alice".to_string()]);
         assert!(
-            engine.fired_alerts.contains(&"monthly_window:alice".to_string()),
+            engine
+                .fired_alerts
+                .contains(&"monthly_window:alice".to_string()),
             "window_secs > 86400 should use monthly bytes"
         );
     }
@@ -444,7 +446,9 @@ mod tests {
         let engine = AlertEngine::new(config, None, tracker);
         engine.evaluate(&["alice".to_string()]);
         assert!(
-            engine.fired_alerts.contains(&"daily_window:alice".to_string()),
+            engine
+                .fired_alerts
+                .contains(&"daily_window:alice".to_string()),
             "window_secs <= 86400 (but > 3600) should use daily bytes"
         );
     }
@@ -497,7 +501,9 @@ mod tests {
         let engine = AlertEngine::new(config, None, tracker);
         engine.evaluate(&["alice".to_string()]);
         assert!(
-            engine.fired_alerts.contains(&"conn_monthly:alice".to_string()),
+            engine
+                .fired_alerts
+                .contains(&"conn_monthly:alice".to_string()),
             "connections_exceeded with window_secs > 86400 should use monthly connections"
         );
     }

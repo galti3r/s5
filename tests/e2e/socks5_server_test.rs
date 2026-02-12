@@ -219,7 +219,11 @@ async fn test_socks5_server_connection_limit() {
         .await
         .unwrap();
     let resp = socks5_greeting(&mut client).await;
-    assert_eq!(resp[1], protocol::AUTH_PASSWORD, "should accept after slots freed");
+    assert_eq!(
+        resp[1],
+        protocol::AUTH_PASSWORD,
+        "should accept after slots freed"
+    );
 }
 
 // ---------------------------------------------------------------------------
@@ -277,5 +281,9 @@ async fn test_socks5_server_connect_anti_ssrf() {
 
     // Try CONNECT to 127.0.0.1 - should be rejected by anti-SSRF
     let reply = socks5_connect_ipv4(&mut client, [127, 0, 0, 1], 80).await;
-    assert_ne!(reply, protocol::REPLY_SUCCESS, "localhost should be blocked");
+    assert_ne!(
+        reply,
+        protocol::REPLY_SUCCESS,
+        "localhost should be blocked"
+    );
 }

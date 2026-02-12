@@ -74,7 +74,10 @@ fn setup(app_config: AppConfig) -> Arc<AppContext> {
 
 /// Helper: write a SOCKS5 greeting advertising password auth
 async fn write_greeting_password(stream: &mut (impl AsyncWriteExt + Unpin)) {
-    stream.write_all(&[0x05, 0x01, protocol::AUTH_PASSWORD]).await.unwrap();
+    stream
+        .write_all(&[0x05, 0x01, protocol::AUTH_PASSWORD])
+        .await
+        .unwrap();
 }
 
 /// Helper: write a SOCKS5 greeting with no acceptable methods
@@ -97,11 +100,7 @@ async fn write_credentials(
 }
 
 /// Helper: write a SOCKS5 CONNECT request to a domain
-async fn write_connect_domain(
-    stream: &mut (impl AsyncWriteExt + Unpin),
-    domain: &str,
-    port: u16,
-) {
+async fn write_connect_domain(stream: &mut (impl AsyncWriteExt + Unpin), domain: &str, port: u16) {
     let mut buf = vec![
         0x05, // VER
         0x01, // CMD = CONNECT
@@ -227,7 +226,7 @@ async fn correct_password_accepted() {
     let n = client.read(&mut reply_buf).await.unwrap();
     assert!(n >= 4);
     assert_eq!(reply_buf[0], 0x05); // SOCKS version
-    // Reply code should indicate failure (host unreachable or general failure)
+                                    // Reply code should indicate failure (host unreachable or general failure)
     assert_ne!(reply_buf[1], protocol::REPLY_SUCCESS);
 
     let _ = server_handle.await;
@@ -301,7 +300,10 @@ async fn forwarding_denied_closes_after_connect() {
     let mut buf = [0u8; 128];
     let n = client.read(&mut buf).await.unwrap();
     // Connection closed (EOF) - 0 bytes means server closed
-    assert_eq!(n, 0, "server should close connection when forwarding denied");
+    assert_eq!(
+        n, 0,
+        "server should close connection when forwarding denied"
+    );
 
     let result = server_handle.await.unwrap();
     assert!(result.is_ok());
@@ -388,7 +390,11 @@ allow_shell = true
     let mut resp2 = [0u8; 2];
     client2.read_exact(&mut resp2).await.unwrap();
     assert_eq!(resp2[0], 0x05); // SOCKS version
-    assert_eq!(resp2[1], protocol::AUTH_NO_ACCEPTABLE, "banned IP should receive AUTH_NO_ACCEPTABLE");
+    assert_eq!(
+        resp2[1],
+        protocol::AUTH_NO_ACCEPTABLE,
+        "banned IP should receive AUTH_NO_ACCEPTABLE"
+    );
 
     let result2 = server2.await.unwrap();
     assert!(result2.is_ok());
@@ -423,7 +429,8 @@ async fn multiple_auth_methods_selects_password() {
     client.read_exact(&mut resp).await.unwrap();
     assert_eq!(resp[0], 0x05, "SOCKS version");
     assert_eq!(
-        resp[1], protocol::AUTH_PASSWORD,
+        resp[1],
+        protocol::AUTH_PASSWORD,
         "server must select AUTH_PASSWORD when client offers [AUTH_NONE, AUTH_PASSWORD]"
     );
 
@@ -505,7 +512,10 @@ allow_shell = true
     let mut auth_resp = [0u8; 2];
     client.read_exact(&mut auth_resp).await.unwrap();
     assert_eq!(auth_resp[0], 0x01, "subneg version");
-    assert_eq!(auth_resp[1], 0x00, "AUTH_SUCCESS for max-length credentials");
+    assert_eq!(
+        auth_resp[1], 0x00,
+        "AUTH_SUCCESS for max-length credentials"
+    );
 
     // Send a CONNECT to let the handler exit cleanly
     write_connect_domain(&mut client, "192.0.2.1", 12345).await;

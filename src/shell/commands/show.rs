@@ -9,7 +9,9 @@ use super::colors::{color, BOLD, CYAN, GREEN, RED, YELLOW};
 macro_rules! require_permission {
     ($ctx:expr, $field:ident, $name:expr) => {
         if !$ctx.permissions.$field {
-            return CommandResult::output(concat!("Permission denied: show ", $name, "\r\n").to_string());
+            return CommandResult::output(
+                concat!("Permission denied: show ", $name, "\r\n").to_string(),
+            );
         }
     };
 }
@@ -72,10 +74,22 @@ fn show_bandwidth(ctx: &ShellContext) -> CommandResult {
     if let Some(ref qt) = ctx.quota_tracker {
         let usage = qt.get_user_usage(&ctx.username);
         let mut output = String::from("Bandwidth usage:\r\n");
-        output.push_str(&format!("  Daily:    {} used\r\n", format_bytes_used(usage.daily_bytes)));
-        output.push_str(&format!("  Monthly:  {} used\r\n", format_bytes_used(usage.monthly_bytes)));
-        output.push_str(&format!("  Hourly:   {} used\r\n", format_bytes_used(usage.hourly_bytes)));
-        output.push_str(&format!("  Rate:     {}\r\n", format_rate(usage.current_rate_bps * 8)));
+        output.push_str(&format!(
+            "  Daily:    {} used\r\n",
+            format_bytes_used(usage.daily_bytes)
+        ));
+        output.push_str(&format!(
+            "  Monthly:  {} used\r\n",
+            format_bytes_used(usage.monthly_bytes)
+        ));
+        output.push_str(&format!(
+            "  Hourly:   {} used\r\n",
+            format_bytes_used(usage.hourly_bytes)
+        ));
+        output.push_str(&format!(
+            "  Rate:     {}\r\n",
+            format_rate(usage.current_rate_bps * 8)
+        ));
         output.push_str(&format!("  Limit:    {}\r\n", limit));
         CommandResult::output(output)
     } else {
@@ -108,7 +122,11 @@ fn show_acl(ctx: &ShellContext) -> CommandResult {
     if !ctx.acl.deny_rules.is_empty() {
         output.push_str(&format!("  {} rules:\r\n", color(RED, "Deny", colors)));
         for rule in &ctx.acl.deny_rules {
-            output.push_str(&format!("    {} {}\r\n", color(RED, "\u{2717}", colors), rule));
+            output.push_str(&format!(
+                "    {} {}\r\n",
+                color(RED, "\u{2717}", colors),
+                rule
+            ));
         }
         output.push_str("\r\n");
     }
@@ -117,7 +135,11 @@ fn show_acl(ctx: &ShellContext) -> CommandResult {
     if !ctx.acl.allow_rules.is_empty() {
         output.push_str(&format!("  {} rules:\r\n", color(GREEN, "Allow", colors)));
         for rule in &ctx.acl.allow_rules {
-            output.push_str(&format!("    {} {}\r\n", color(GREEN, "\u{2713}", colors), rule));
+            output.push_str(&format!(
+                "    {} {}\r\n",
+                color(GREEN, "\u{2713}", colors),
+                rule
+            ));
         }
         output.push_str("\r\n");
     }
@@ -135,10 +157,7 @@ fn show_status(ctx: &ShellContext) -> CommandResult {
     let colors = ctx.colors;
     let mut output = String::new();
 
-    output.push_str(&format!(
-        "{}\r\n",
-        color(BOLD, "Session Status", colors)
-    ));
+    output.push_str(&format!("{}\r\n", color(BOLD, "Session Status", colors)));
     output.push_str(&format!(
         "  User:        {}\r\n",
         color(CYAN, &ctx.username, colors)
@@ -216,6 +235,7 @@ fn show_fingerprint(ctx: &ShellContext) -> CommandResult {
 
 #[cfg(test)]
 mod tests {
+    use super::super::test_helpers::make_test_ctx;
     use super::*;
     use crate::config::acl::ParsedAcl;
     use crate::config::types::{AclPolicyConfig, LimitsConfig};
@@ -223,7 +243,6 @@ mod tests {
     use crate::quota::QuotaTracker;
     use crate::utils::format_bytes_used;
     use std::sync::Arc;
-    use super::super::test_helpers::make_test_ctx;
 
     fn make_ctx() -> ShellContext {
         let mut ctx = make_test_ctx();

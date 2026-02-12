@@ -178,7 +178,9 @@ password_hash = "{FAKE_HASH}"
 "##
     );
     let err = parse_config(&toml).unwrap_err();
-    assert!(err.to_string().contains("socks5_tls_cert and socks5_tls_key"));
+    assert!(err
+        .to_string()
+        .contains("socks5_tls_cert and socks5_tls_key"));
 }
 
 #[test]
@@ -195,7 +197,9 @@ password_hash = "{FAKE_HASH}"
 "##
     );
     let err = parse_config(&toml).unwrap_err();
-    assert!(err.to_string().contains("socks5_tls_cert and socks5_tls_key"));
+    assert!(err
+        .to_string()
+        .contains("socks5_tls_cert and socks5_tls_key"));
 }
 
 // ---------------------------------------------------------------------------
@@ -694,8 +698,14 @@ status = "show status"
     );
     let config = parse_config(&toml).unwrap();
     assert_eq!(config.users[0].aliases.len(), 2);
-    assert_eq!(config.users[0].aliases.get("db").unwrap(), "test prod-db:5432");
-    assert_eq!(config.users[0].aliases.get("status").unwrap(), "show status");
+    assert_eq!(
+        config.users[0].aliases.get("db").unwrap(),
+        "test prod-db:5432"
+    );
+    assert_eq!(
+        config.users[0].aliases.get("status").unwrap(),
+        "show status"
+    );
 }
 
 #[test]
@@ -789,9 +799,21 @@ fn user_role_display() {
 
 #[test]
 fn alert_condition_display() {
-    assert_eq!(AlertCondition::BandwidthExceeded.to_string(), "bandwidth_exceeded");
-    assert_eq!(AlertCondition::ConnectionsExceeded.to_string(), "connections_exceeded");
-    assert_eq!(AlertCondition::MonthlyBandwidthExceeded.to_string(), "monthly_bandwidth_exceeded");
-    assert_eq!(AlertCondition::HourlyBandwidthExceeded.to_string(), "hourly_bandwidth_exceeded");
+    assert_eq!(
+        AlertCondition::BandwidthExceeded.to_string(),
+        "bandwidth_exceeded"
+    );
+    assert_eq!(
+        AlertCondition::ConnectionsExceeded.to_string(),
+        "connections_exceeded"
+    );
+    assert_eq!(
+        AlertCondition::MonthlyBandwidthExceeded.to_string(),
+        "monthly_bandwidth_exceeded"
+    );
+    assert_eq!(
+        AlertCondition::HourlyBandwidthExceeded.to_string(),
+        "hourly_bandwidth_exceeded"
+    );
     assert_eq!(AlertCondition::AuthFailures.to_string(), "auth_failures");
 }

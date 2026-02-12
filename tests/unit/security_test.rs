@@ -221,10 +221,16 @@ fn test_ban_whitelist_cidr_range() {
 
     // IPs within the CIDR range should never be banned
     mgr.record_failure(&ip1);
-    assert!(!mgr.is_banned(&ip1), "10.1.2.3 should be whitelisted by 10.0.0.0/8");
+    assert!(
+        !mgr.is_banned(&ip1),
+        "10.1.2.3 should be whitelisted by 10.0.0.0/8"
+    );
 
     mgr.record_failure(&ip2);
-    assert!(!mgr.is_banned(&ip2), "10.255.255.254 should be whitelisted by 10.0.0.0/8");
+    assert!(
+        !mgr.is_banned(&ip2),
+        "10.255.255.254 should be whitelisted by 10.0.0.0/8"
+    );
 
     // IP outside the range should be banned after 1 failure
     mgr.record_failure(&ip3);
@@ -238,10 +244,7 @@ fn test_ban_whitelist_mixed_ip_and_cidr() {
         1,
         300,
         60,
-        vec![
-            "127.0.0.1".to_string(),
-            "192.168.0.0/16".to_string(),
-        ],
+        vec!["127.0.0.1".to_string(), "192.168.0.0/16".to_string()],
     );
 
     let loopback: IpAddr = "127.0.0.1".parse().unwrap();
@@ -249,10 +252,16 @@ fn test_ban_whitelist_mixed_ip_and_cidr() {
     let public: IpAddr = "8.8.8.8".parse().unwrap();
 
     mgr.record_failure(&loopback);
-    assert!(!mgr.is_banned(&loopback), "127.0.0.1 whitelisted as single IP");
+    assert!(
+        !mgr.is_banned(&loopback),
+        "127.0.0.1 whitelisted as single IP"
+    );
 
     mgr.record_failure(&private);
-    assert!(!mgr.is_banned(&private), "192.168.50.100 whitelisted by CIDR");
+    assert!(
+        !mgr.is_banned(&private),
+        "192.168.50.100 whitelisted by CIDR"
+    );
 
     mgr.record_failure(&public);
     assert!(mgr.is_banned(&public), "8.8.8.8 not whitelisted");
@@ -260,22 +269,22 @@ fn test_ban_whitelist_mixed_ip_and_cidr() {
 
 #[test]
 fn test_ban_whitelist_cidr_ipv6() {
-    let mgr = BanManager::new(
-        true,
-        1,
-        300,
-        60,
-        vec!["fd00::/8".to_string()],
-    );
+    let mgr = BanManager::new(true, 1, 300, 60, vec!["fd00::/8".to_string()]);
 
     let ip_in: IpAddr = "fd12:3456:789a::1".parse().unwrap();
     let ip_out: IpAddr = "2001:db8::1".parse().unwrap();
 
     mgr.record_failure(&ip_in);
-    assert!(!mgr.is_banned(&ip_in), "fd12::1 should be whitelisted by fd00::/8");
+    assert!(
+        !mgr.is_banned(&ip_in),
+        "fd12::1 should be whitelisted by fd00::/8"
+    );
 
     mgr.record_failure(&ip_out);
-    assert!(mgr.is_banned(&ip_out), "2001:db8::1 should NOT be whitelisted");
+    assert!(
+        mgr.is_banned(&ip_out),
+        "2001:db8::1 should NOT be whitelisted"
+    );
 }
 
 #[test]
@@ -297,7 +306,10 @@ fn test_ban_whitelist_invalid_entries_skipped() {
     let ip_out: IpAddr = "192.168.2.50".parse().unwrap();
 
     mgr.record_failure(&ip_in);
-    assert!(!mgr.is_banned(&ip_in), "192.168.1.50 whitelisted despite invalid entries");
+    assert!(
+        !mgr.is_banned(&ip_in),
+        "192.168.1.50 whitelisted despite invalid entries"
+    );
 
     mgr.record_failure(&ip_out);
     assert!(mgr.is_banned(&ip_out), "192.168.2.50 not in whitelist");

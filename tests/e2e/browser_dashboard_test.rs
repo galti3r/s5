@@ -1,8 +1,8 @@
 #[allow(dead_code, unused_imports)]
 mod helpers;
 
-use helpers::*;
 use futures::StreamExt;
+use helpers::*;
 use std::process::Command;
 use std::time::Duration;
 use tokio::sync::OnceCell;
@@ -94,9 +94,7 @@ async fn connect_browser(cdp_port: u16) -> (chromiumoxide::Browser, tokio::task:
         .await
         .expect("connect to Chrome CDP");
 
-    let handle = tokio::spawn(async move {
-        while handler.next().await.is_some() {}
-    });
+    let handle = tokio::spawn(async move { while handler.next().await.is_some() {} });
 
     (browser, handle)
 }
@@ -300,15 +298,21 @@ async fn test_dashboard_theme_toggle() {
     let page = open_dashboard(&browser, api_port, TOKEN).await;
 
     // Check initial state (headless Chrome may default to light or dark)
-    let initial_light =
-        eval_bool(&page, "document.documentElement.classList.contains('light')").await;
+    let initial_light = eval_bool(
+        &page,
+        "document.documentElement.classList.contains('light')",
+    )
+    .await;
 
     // Toggle once
     page.evaluate("toggleTheme()").await.unwrap();
     tokio::time::sleep(Duration::from_millis(200)).await;
 
-    let after_first =
-        eval_bool(&page, "document.documentElement.classList.contains('light')").await;
+    let after_first = eval_bool(
+        &page,
+        "document.documentElement.classList.contains('light')",
+    )
+    .await;
     assert_ne!(
         initial_light, after_first,
         "theme should change after first toggle"
@@ -318,8 +322,11 @@ async fn test_dashboard_theme_toggle() {
     page.evaluate("toggleTheme()").await.unwrap();
     tokio::time::sleep(Duration::from_millis(200)).await;
 
-    let after_second =
-        eval_bool(&page, "document.documentElement.classList.contains('light')").await;
+    let after_second = eval_bool(
+        &page,
+        "document.documentElement.classList.contains('light')",
+    )
+    .await;
     assert_eq!(
         initial_light, after_second,
         "theme should return to initial state after second toggle"
@@ -399,18 +406,10 @@ async fn test_dashboard_live_data_updates() {
     )
     .await;
 
-    let total_users = eval_str(
-        &page,
-        "document.getElementById('totalUsers').textContent",
-    )
-    .await;
+    let total_users = eval_str(&page, "document.getElementById('totalUsers').textContent").await;
     assert_eq!(total_users, "1", "should show 1 configured user");
 
-    let active_conn = eval_str(
-        &page,
-        "document.getElementById('activeConn').textContent",
-    )
-    .await;
+    let active_conn = eval_str(&page, "document.getElementById('activeConn').textContent").await;
     assert_eq!(active_conn, "0", "no active SSH connections");
 
     let uptime = eval_str(&page, "document.getElementById('uptime').textContent").await;
@@ -449,11 +448,7 @@ async fn test_dashboard_user_table_populated() {
     )
     .await;
 
-    let table_html = eval_str(
-        &page,
-        "document.getElementById('userTable').innerHTML",
-    )
-    .await;
+    let table_html = eval_str(&page, "document.getElementById('userTable').innerHTML").await;
     assert!(
         table_html.contains("testuser"),
         "user table should contain 'testuser'"
@@ -494,11 +489,7 @@ async fn test_dashboard_maintenance_toggle() {
     .await;
 
     // Verify initial state is OFF
-    let maint = eval_str(
-        &page,
-        "document.getElementById('maintBadge').textContent",
-    )
-    .await;
+    let maint = eval_str(&page, "document.getElementById('maintBadge').textContent").await;
     assert_eq!(maint, "OFF", "maintenance should initially be OFF");
 
     // Click the Toggle Maintenance button via JS
@@ -516,11 +507,7 @@ async fn test_dashboard_maintenance_toggle() {
     .await;
 
     // Verify actionMsg was set
-    let action_msg = eval_str(
-        &page,
-        "document.getElementById('actionMsg').textContent",
-    )
-    .await;
+    let action_msg = eval_str(&page, "document.getElementById('actionMsg').textContent").await;
     assert!(
         !action_msg.is_empty(),
         "actionMsg should not be empty after toggle"
@@ -571,11 +558,7 @@ async fn test_dashboard_disconnect_shows_offline() {
         dot_class
     );
 
-    let status = eval_str(
-        &page,
-        "document.getElementById('connStatus').textContent",
-    )
-    .await;
+    let status = eval_str(&page, "document.getElementById('connStatus').textContent").await;
     assert_eq!(status, "Disconnected", "status should show Disconnected");
 }
 
@@ -614,12 +597,7 @@ async fn test_dashboard_stat_cards_structure() {
         .into_value()
         .unwrap();
 
-    for expected in &[
-        "Active Connections",
-        "Banned IPs",
-        "Total Users",
-        "Uptime",
-    ] {
+    for expected in &["Active Connections", "Banned IPs", "Total Users", "Uptime"] {
         assert!(
             headings.iter().any(|h| h == expected),
             "stat cards should contain '{}', got: {:?}",
@@ -651,9 +629,7 @@ async fn test_dashboard_controls_panel_exists() {
 
     // Check buttons exist with correct labels
     let buttons: Vec<String> = page
-        .evaluate(
-            "Array.from(document.querySelectorAll('.btn.primary')).map(b => b.textContent)",
-        )
+        .evaluate("Array.from(document.querySelectorAll('.btn.primary')).map(b => b.textContent)")
         .await
         .unwrap()
         .into_value()

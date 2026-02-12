@@ -45,8 +45,7 @@ pub fn build_config_from_env() -> anyhow::Result<AppConfig> {
             host_key_path: opt_env("S5_HOST_KEY_PATH")
                 .map(PathBuf::from)
                 .unwrap_or_else(|| PathBuf::from("host_key")),
-            server_id: opt_env("S5_SERVER_ID")
-                .unwrap_or_else(|| "SSH-2.0-s5".to_string()),
+            server_id: opt_env("S5_SERVER_ID").unwrap_or_else(|| "SSH-2.0-s5".to_string()),
             banner: opt_env("S5_BANNER").unwrap_or_else(|| "Welcome to s5".to_string()),
             motd_path: opt_env("S5_MOTD_PATH").map(PathBuf::from),
             proxy_protocol: parse_bool_env("S5_PROXY_PROTOCOL", false),
@@ -80,7 +79,10 @@ pub fn build_config_from_env() -> anyhow::Result<AppConfig> {
             idle_warning_secs: parse_env("S5_IDLE_WARNING_SECS", 0),
             max_bandwidth_mbps: parse_env("S5_MAX_BANDWIDTH_MBPS", 0),
             max_new_connections_per_second: parse_env("S5_MAX_NEW_CONNECTIONS_PER_SECOND", 0),
-            max_new_connections_per_minute: parse_env("S5_MAX_NEW_CONNECTIONS_PER_MINUTE_SERVER", 0),
+            max_new_connections_per_minute: parse_env(
+                "S5_MAX_NEW_CONNECTIONS_PER_MINUTE_SERVER",
+                0,
+            ),
             udp_relay_timeout: parse_env("S5_UDP_RELAY_TIMEOUT", 300),
             max_udp_sessions_per_user: parse_env("S5_MAX_UDP_SESSIONS_PER_USER", 0),
         },
@@ -102,7 +104,10 @@ pub fn build_config_from_env() -> anyhow::Result<AppConfig> {
             ban_whitelist: parse_csv_env("S5_BAN_WHITELIST"),
             ip_guard_enabled: parse_bool_env("S5_IP_GUARD_ENABLED", true),
             totp_required_for: parse_csv_env("S5_TOTP_REQUIRED_FOR"),
-            max_new_connections_per_ip_per_minute: parse_env("S5_MAX_NEW_CONNECTIONS_PER_IP_PER_MINUTE", 0),
+            max_new_connections_per_ip_per_minute: parse_env(
+                "S5_MAX_NEW_CONNECTIONS_PER_IP_PER_MINUTE",
+                0,
+            ),
             ip_reputation_enabled: parse_bool_env("S5_IP_REPUTATION_ENABLED", false),
             ip_reputation_ban_threshold: parse_env("S5_IP_REPUTATION_BAN_THRESHOLD", 100),
             trusted_user_ca_keys: parse_csv_env("S5_TRUSTED_USER_CA_KEYS"),
@@ -129,14 +134,12 @@ pub fn build_config_from_env() -> anyhow::Result<AppConfig> {
         },
         metrics: MetricsConfig {
             enabled: parse_bool_env("S5_METRICS_ENABLED", false),
-            listen: opt_env("S5_METRICS_LISTEN")
-                .unwrap_or_else(|| "127.0.0.1:9090".to_string()),
+            listen: opt_env("S5_METRICS_LISTEN").unwrap_or_else(|| "127.0.0.1:9090".to_string()),
             max_metric_labels: parse_env("S5_MAX_METRIC_LABELS", 100),
         },
         api: ApiConfig {
             enabled: parse_bool_env("S5_API_ENABLED", false),
-            listen: opt_env("S5_API_LISTEN")
-                .unwrap_or_else(|| "127.0.0.1:9091".to_string()),
+            listen: opt_env("S5_API_LISTEN").unwrap_or_else(|| "127.0.0.1:9091".to_string()),
             token: resolve_env_or_file("S5_API_TOKEN")?.unwrap_or_default(),
         },
         geoip: GeoIpConfig {
@@ -231,9 +234,7 @@ fn build_single_user_from_env() -> anyhow::Result<UserConfig> {
     let authorized_keys_str = opt_env("S5_AUTHORIZED_KEYS");
 
     if password_hash.is_none() && authorized_keys_str.is_none() {
-        anyhow::bail!(
-            "env var config requires S5_PASSWORD_HASH or S5_AUTHORIZED_KEYS (or both)"
-        );
+        anyhow::bail!("env var config requires S5_PASSWORD_HASH or S5_AUTHORIZED_KEYS (or both)");
     }
 
     let authorized_keys = authorized_keys_str
@@ -271,16 +272,19 @@ fn collect_indexed_users() -> anyhow::Result<Vec<UserConfig>> {
         let authorized_keys_str = opt_env(&format!("{prefix}AUTHORIZED_KEYS"));
 
         if password_hash.is_none() && authorized_keys_str.is_none() {
-            anyhow::bail!(
-                "user #{idx} ({username}) requires PASSWORD_HASH or AUTHORIZED_KEYS"
-            );
+            anyhow::bail!("user #{idx} ({username}) requires PASSWORD_HASH or AUTHORIZED_KEYS");
         }
 
         let authorized_keys = authorized_keys_str
             .map(|s| s.split(',').map(|k| k.trim().to_string()).collect())
             .unwrap_or_default();
 
-        users.push(build_user_config(&prefix, username, password_hash, authorized_keys)?);
+        users.push(build_user_config(
+            &prefix,
+            username,
+            password_hash,
+            authorized_keys,
+        )?);
     }
 
     if users.is_empty() {
@@ -334,8 +338,10 @@ pub fn apply_env_overrides(config: &mut AppConfig) {
 
     // SOCKS5 handshake timeout override
     if std::env::var("S5_SOCKS5_HANDSHAKE_TIMEOUT").is_ok() {
-        config.limits.socks5_handshake_timeout =
-            parse_env("S5_SOCKS5_HANDSHAKE_TIMEOUT", config.limits.socks5_handshake_timeout);
+        config.limits.socks5_handshake_timeout = parse_env(
+            "S5_SOCKS5_HANDSHAKE_TIMEOUT",
+            config.limits.socks5_handshake_timeout,
+        );
     }
 
     // Logging overrides
@@ -352,11 +358,14 @@ pub fn apply_env_overrides(config: &mut AppConfig) {
 
     // Limits overrides
     if std::env::var("S5_MAX_CONNECTIONS").is_ok() {
-        config.limits.max_connections = parse_env("S5_MAX_CONNECTIONS", config.limits.max_connections);
+        config.limits.max_connections =
+            parse_env("S5_MAX_CONNECTIONS", config.limits.max_connections);
     }
     if std::env::var("S5_MAX_CONNECTIONS_PER_USER").is_ok() {
-        config.limits.max_connections_per_user =
-            parse_env("S5_MAX_CONNECTIONS_PER_USER", config.limits.max_connections_per_user);
+        config.limits.max_connections_per_user = parse_env(
+            "S5_MAX_CONNECTIONS_PER_USER",
+            config.limits.max_connections_per_user,
+        );
     }
     if std::env::var("S5_CONNECTION_TIMEOUT").is_ok() {
         config.limits.connection_timeout =
@@ -370,12 +379,16 @@ pub fn apply_env_overrides(config: &mut AppConfig) {
             parse_env("S5_MAX_BANDWIDTH_MBPS", config.limits.max_bandwidth_mbps);
     }
     if std::env::var("S5_MAX_NEW_CONNECTIONS_PER_SECOND").is_ok() {
-        config.limits.max_new_connections_per_second =
-            parse_env("S5_MAX_NEW_CONNECTIONS_PER_SECOND", config.limits.max_new_connections_per_second);
+        config.limits.max_new_connections_per_second = parse_env(
+            "S5_MAX_NEW_CONNECTIONS_PER_SECOND",
+            config.limits.max_new_connections_per_second,
+        );
     }
     if std::env::var("S5_MAX_NEW_CONNECTIONS_PER_MINUTE_SERVER").is_ok() {
-        config.limits.max_new_connections_per_minute =
-            parse_env("S5_MAX_NEW_CONNECTIONS_PER_MINUTE_SERVER", config.limits.max_new_connections_per_minute);
+        config.limits.max_new_connections_per_minute = parse_env(
+            "S5_MAX_NEW_CONNECTIONS_PER_MINUTE_SERVER",
+            config.limits.max_new_connections_per_minute,
+        );
     }
 
     // Security overrides
@@ -389,16 +402,20 @@ pub fn apply_env_overrides(config: &mut AppConfig) {
 
     // Rate limiter overrides
     if std::env::var("S5_RATE_LIMIT_CLEANUP_INTERVAL").is_ok() {
-        config.security.rate_limit_cleanup_interval =
-            parse_env("S5_RATE_LIMIT_CLEANUP_INTERVAL", config.security.rate_limit_cleanup_interval);
+        config.security.rate_limit_cleanup_interval = parse_env(
+            "S5_RATE_LIMIT_CLEANUP_INTERVAL",
+            config.security.rate_limit_cleanup_interval,
+        );
     }
     if std::env::var("S5_RATE_LIMIT_MAX_IPS").is_ok() {
         config.security.rate_limit_max_ips =
             parse_env("S5_RATE_LIMIT_MAX_IPS", config.security.rate_limit_max_ips);
     }
     if std::env::var("S5_RATE_LIMIT_MAX_USERS").is_ok() {
-        config.security.rate_limit_max_users =
-            parse_env("S5_RATE_LIMIT_MAX_USERS", config.security.rate_limit_max_users);
+        config.security.rate_limit_max_users = parse_env(
+            "S5_RATE_LIMIT_MAX_USERS",
+            config.security.rate_limit_max_users,
+        );
     }
 
     // Argon2 parameter overrides
@@ -469,7 +486,9 @@ fn clear_sensitive_env_vars() {
             // SAFETY: We only remove env vars that we own (S5_* namespace).
             // There is an inherent race if other threads read these concurrently,
             // but this is best-effort defense-in-depth and happens at startup.
-            unsafe { std::env::remove_var(&key); }
+            unsafe {
+                std::env::remove_var(&key);
+            }
         }
     }
 
@@ -483,7 +502,9 @@ fn clear_sensitive_env_vars() {
         for suffix in &sensitive_suffixes {
             let key = format!("{prefix}{suffix}");
             if std::env::var_os(&key).is_some() {
-                unsafe { std::env::remove_var(&key); }
+                unsafe {
+                    std::env::remove_var(&key);
+                }
             }
         }
     }
@@ -521,9 +542,7 @@ fn require_env(key: &str) -> anyhow::Result<String> {
 }
 
 fn parse_env<T: std::str::FromStr + Copy>(key: &str, default: T) -> T {
-    opt_env(key)
-        .and_then(|v| v.parse().ok())
-        .unwrap_or(default)
+    opt_env(key).and_then(|v| v.parse().ok()).unwrap_or(default)
 }
 
 fn parse_bool_env(key: &str, default: bool) -> bool {
@@ -879,7 +898,10 @@ password_hash = "argon2id-fake"
                 let result = build_config_from_env();
                 assert!(result.is_err());
                 let err = result.unwrap_err().to_string();
-                assert!(err.contains("alice"), "error should mention username: {err}");
+                assert!(
+                    err.contains("alice"),
+                    "error should mention username: {err}"
+                );
             },
         );
     }
@@ -890,7 +912,10 @@ password_hash = "argon2id-fake"
             &[
                 ("S5_SSH_LISTEN", "0.0.0.0:2222"),
                 ("S5_USER_0_USERNAME", "charlie"),
-                ("S5_USER_0_AUTHORIZED_KEYS", "ssh-ed25519 AAAA1,ssh-ed25519 AAAA2"),
+                (
+                    "S5_USER_0_AUTHORIZED_KEYS",
+                    "ssh-ed25519 AAAA1,ssh-ed25519 AAAA2",
+                ),
             ],
             || {
                 let config = build_config_from_env().unwrap();
@@ -937,10 +962,7 @@ password_hash = "argon2id-fake"
         std::fs::write(&secret_path, "  file-secret-value  \n").unwrap();
 
         with_env_vars(
-            &[(
-                "S5_API_TOKEN_FILE",
-                secret_path.to_str().unwrap(),
-            )],
+            &[("S5_API_TOKEN_FILE", secret_path.to_str().unwrap())],
             || {
                 let result = resolve_env_or_file("S5_API_TOKEN").unwrap();
                 assert_eq!(result.as_deref(), Some("file-secret-value"));
@@ -1025,10 +1047,7 @@ password_hash = "argon2id-fake"
             &[
                 ("S5_SSH_LISTEN", "0.0.0.0:2222"),
                 ("S5_USER_0_USERNAME", "alice"),
-                (
-                    "S5_USER_0_PASSWORD_HASH_FILE",
-                    hash_path.to_str().unwrap(),
-                ),
+                ("S5_USER_0_PASSWORD_HASH_FILE", hash_path.to_str().unwrap()),
             ],
             || {
                 let config = build_config_from_env().unwrap();

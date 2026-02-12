@@ -30,9 +30,7 @@ pub fn run(args: &[String], ctx: &mut ShellContext) -> CommandResult {
         let name = &first[..eq_pos];
         let command = &first[eq_pos + 1..];
         if name.is_empty() {
-            return CommandResult::output(
-                "Usage: alias <name>=<command>\r\n".to_string(),
-            );
+            return CommandResult::output("Usage: alias <name>=<command>\r\n".to_string());
         }
         // The command might span multiple args if the user did: alias foo=show status
         // In that case, the tokenizer already split it, so we rejoin
@@ -48,18 +46,14 @@ pub fn run(args: &[String], ctx: &mut ShellContext) -> CommandResult {
         };
 
         if full_command.is_empty() {
-            return CommandResult::output(
-                "Usage: alias <name>=<command>\r\n".to_string(),
-            );
+            return CommandResult::output("Usage: alias <name>=<command>\r\n".to_string());
         }
 
         return alias_set(name, &full_command, ctx);
     }
 
     // If arg doesn't contain '=', show usage
-    CommandResult::output(
-        "Usage: alias [<name>=<command>] | alias remove <name>\r\n".to_string(),
-    )
+    CommandResult::output("Usage: alias [<name>=<command>] | alias remove <name>\r\n".to_string())
 }
 
 fn alias_list(ctx: &ShellContext) -> CommandResult {
@@ -70,10 +64,7 @@ fn alias_list(ctx: &ShellContext) -> CommandResult {
     }
 
     let mut output = String::new();
-    output.push_str(&format!(
-        "{}\r\n",
-        color(CYAN, "Aliases:", colors)
-    ));
+    output.push_str(&format!("{}\r\n", color(CYAN, "Aliases:", colors)));
 
     // Sort by name for deterministic output
     let mut entries: Vec<_> = ctx.aliases.iter().collect();
@@ -92,7 +83,10 @@ fn alias_list(ctx: &ShellContext) -> CommandResult {
 
 fn alias_set(name: &str, command: &str, ctx: &mut ShellContext) -> CommandResult {
     let colors = ctx.colors;
-    let existed = ctx.aliases.insert(name.to_string(), command.to_string()).is_some();
+    let existed = ctx
+        .aliases
+        .insert(name.to_string(), command.to_string())
+        .is_some();
     let action = if existed { "Updated" } else { "Added" };
 
     CommandResult::output(format!(
@@ -105,9 +99,7 @@ fn alias_set(name: &str, command: &str, ctx: &mut ShellContext) -> CommandResult
 
 fn alias_remove(args: &[String], ctx: &mut ShellContext) -> CommandResult {
     if args.is_empty() {
-        return CommandResult::output(
-            "Usage: alias remove <name>\r\n".to_string(),
-        );
+        return CommandResult::output("Usage: alias remove <name>\r\n".to_string());
     }
 
     let name = &args[0];
@@ -119,17 +111,14 @@ fn alias_remove(args: &[String], ctx: &mut ShellContext) -> CommandResult {
             color(GREEN, "Removed", colors),
             name
         )),
-        None => CommandResult::output(format!(
-            "Alias '{}' not found\r\n",
-            name
-        )),
+        None => CommandResult::output(format!("Alias '{}' not found\r\n", name)),
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::test_helpers::make_test_ctx;
+    use super::*;
 
     fn make_ctx() -> ShellContext {
         make_test_ctx()
@@ -145,8 +134,10 @@ mod tests {
     #[test]
     fn test_alias_list_with_entries() {
         let mut ctx = make_ctx();
-        ctx.aliases.insert("s".to_string(), "show status".to_string());
-        ctx.aliases.insert("c".to_string(), "show connections".to_string());
+        ctx.aliases
+            .insert("s".to_string(), "show status".to_string());
+        ctx.aliases
+            .insert("c".to_string(), "show connections".to_string());
         let result = run(&[], &mut ctx);
         assert!(result.output.contains("Aliases:"));
         assert!(result.output.contains("s"));
@@ -178,7 +169,8 @@ mod tests {
     #[test]
     fn test_alias_update() {
         let mut ctx = make_ctx();
-        ctx.aliases.insert("s".to_string(), "old command".to_string());
+        ctx.aliases
+            .insert("s".to_string(), "old command".to_string());
         let result = run(&["s=show bandwidth".to_string()], &mut ctx);
         assert!(result.output.contains("Updated"));
         assert_eq!(ctx.aliases.get("s").unwrap(), "show bandwidth");
@@ -201,11 +193,9 @@ mod tests {
     #[test]
     fn test_alias_remove() {
         let mut ctx = make_ctx();
-        ctx.aliases.insert("s".to_string(), "show status".to_string());
-        let result = run(
-            &["remove".to_string(), "s".to_string()],
-            &mut ctx,
-        );
+        ctx.aliases
+            .insert("s".to_string(), "show status".to_string());
+        let result = run(&["remove".to_string(), "s".to_string()], &mut ctx);
         assert!(result.output.contains("Removed"));
         assert!(!ctx.aliases.contains_key("s"));
     }
@@ -213,10 +203,7 @@ mod tests {
     #[test]
     fn test_alias_remove_nonexistent() {
         let mut ctx = make_ctx();
-        let result = run(
-            &["remove".to_string(), "nope".to_string()],
-            &mut ctx,
-        );
+        let result = run(&["remove".to_string(), "nope".to_string()], &mut ctx);
         assert!(result.output.contains("not found"));
     }
 

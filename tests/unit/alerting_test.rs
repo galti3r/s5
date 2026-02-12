@@ -47,7 +47,11 @@ fn bandwidth_exceeded_fires_alert() {
     let tracker = test_tracker();
     let _ = tracker.record_bytes("alice", 2000, 0, 0, None);
 
-    let config = make_config(vec![make_rule("high_bw", AlertCondition::BandwidthExceeded, 1000)]);
+    let config = make_config(vec![make_rule(
+        "high_bw",
+        AlertCondition::BandwidthExceeded,
+        1000,
+    )]);
     let engine = AlertEngine::new(config, None, tracker);
     engine.evaluate(&["alice".to_string()]);
 
@@ -65,7 +69,11 @@ fn below_threshold_does_not_fire() {
     let tracker = test_tracker();
     let _ = tracker.record_bytes("alice", 500, 0, 0, None);
 
-    let config = make_config(vec![make_rule("low_bw", AlertCondition::BandwidthExceeded, 1000)]);
+    let config = make_config(vec![make_rule(
+        "low_bw",
+        AlertCondition::BandwidthExceeded,
+        1000,
+    )]);
     let engine = AlertEngine::new(config, None, tracker);
     engine.evaluate(&["alice".to_string()]);
     // No assertion on internal state needed; the test passes if no panic/crash
@@ -81,7 +89,11 @@ fn connections_exceeded_fires() {
         let _ = tracker.record_connection("bob", None);
     }
 
-    let config = make_config(vec![make_rule("conn_limit", AlertCondition::ConnectionsExceeded, 3)]);
+    let config = make_config(vec![make_rule(
+        "conn_limit",
+        AlertCondition::ConnectionsExceeded,
+        3,
+    )]);
     let engine = AlertEngine::new(config, None, tracker);
     engine.evaluate(&["bob".to_string()]);
 }
@@ -94,7 +106,11 @@ fn deduplication_prevents_repeat_fires() {
     let tracker = test_tracker();
     let _ = tracker.record_bytes("alice", 2000, 0, 0, None);
 
-    let config = make_config(vec![make_rule("bw_alert", AlertCondition::BandwidthExceeded, 1000)]);
+    let config = make_config(vec![make_rule(
+        "bw_alert",
+        AlertCondition::BandwidthExceeded,
+        1000,
+    )]);
     let engine = AlertEngine::new(config, None, tracker);
 
     // First evaluation should fire
@@ -111,7 +127,11 @@ fn reset_fired_clears_dedup_state() {
     let tracker = test_tracker();
     let _ = tracker.record_bytes("alice", 2000, 0, 0, None);
 
-    let config = make_config(vec![make_rule("bw_alert", AlertCondition::BandwidthExceeded, 1000)]);
+    let config = make_config(vec![make_rule(
+        "bw_alert",
+        AlertCondition::BandwidthExceeded,
+        1000,
+    )]);
     let engine = AlertEngine::new(config, None, tracker);
 
     engine.evaluate(&["alice".to_string()]);
@@ -223,7 +243,11 @@ fn empty_known_users_no_alerts() {
     let tracker = test_tracker();
     let _ = tracker.record_bytes("alice", 2000, 0, 0, None);
 
-    let config = make_config(vec![make_rule("bw_alert", AlertCondition::BandwidthExceeded, 1000)]);
+    let config = make_config(vec![make_rule(
+        "bw_alert",
+        AlertCondition::BandwidthExceeded,
+        1000,
+    )]);
     let engine = AlertEngine::new(config, None, tracker);
     // No known users passed => no users to check (rule has empty users list)
     engine.evaluate(&[]);

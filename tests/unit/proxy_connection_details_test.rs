@@ -72,16 +72,8 @@ async fn active_connection_details_shows_users() {
         .find(|(name, _)| name == "bob")
         .map(|(_, c)| *c);
 
-    assert_eq!(
-        alice_count,
-        Some(1),
-        "alice should have 1 connection"
-    );
-    assert_eq!(
-        bob_count,
-        Some(1),
-        "bob should have 1 connection"
-    );
+    assert_eq!(alice_count, Some(1), "alice should have 1 connection");
+    assert_eq!(bob_count, Some(1), "bob should have 1 connection");
 }
 
 // ---------------------------------------------------------------------------
@@ -137,14 +129,6 @@ async fn active_connection_details_multiple_connections() {
         .find(|(name, _)| name == "bob")
         .map(|(_, c)| *c);
 
-    assert_eq!(
-        alice_count,
-        Some(3),
-        "alice should have 3 connections"
-    );
-    assert_eq!(
-        bob_count,
-        Some(2),
-        "bob should have 2 connections"
-    );
+    assert_eq!(alice_count, Some(3), "alice should have 3 connections");
+    assert_eq!(bob_count, Some(2), "bob should have 2 connections");
 }

@@ -15,13 +15,19 @@ fn gen_authorized_keys_line() -> (KeyPair, PublicKey, String) {
 fn parse_valid_ed25519_key() {
     let (_kp, expected_pubkey, line) = gen_authorized_keys_line();
     let parsed = pubkey::parse_authorized_key(&line).expect("should parse a valid ed25519 key");
-    assert_eq!(parsed, expected_pubkey, "parsed key must equal the original public key");
+    assert_eq!(
+        parsed, expected_pubkey,
+        "parsed key must equal the original public key"
+    );
 }
 
 #[test]
 fn parse_invalid_key_returns_error() {
     let result = pubkey::parse_authorized_key("not-a-valid-key-line");
-    assert!(result.is_err(), "single token line should fail (missing base64 field)");
+    assert!(
+        result.is_err(),
+        "single token line should fail (missing base64 field)"
+    );
 
     let result2 = pubkey::parse_authorized_key("ssh-ed25519 !!!invalid_base64!!! comment");
     assert!(result2.is_err(), "invalid base64 should fail to parse");
@@ -57,7 +63,11 @@ fn parse_authorized_keys_skips_invalid() {
         "ssh-ed25519 !!!bad!!! comment".to_string(),
     ];
     let parsed = pubkey::parse_authorized_keys(&lines);
-    assert_eq!(parsed.len(), 1, "only the valid key should be parsed; invalid ones are skipped");
+    assert_eq!(
+        parsed.len(),
+        1,
+        "only the valid key should be parsed; invalid ones are skipped"
+    );
 }
 
 #[test]

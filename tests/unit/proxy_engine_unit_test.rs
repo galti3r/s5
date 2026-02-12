@@ -6,7 +6,10 @@ use std::sync::Arc;
 
 const FAKE_HASH: &str = "argon2id-fakehash-for-testing";
 
-fn create_test_config(max_connections: u32, max_connections_per_user: u32) -> Arc<s5::config::types::AppConfig> {
+fn create_test_config(
+    max_connections: u32,
+    max_connections_per_user: u32,
+) -> Arc<s5::config::types::AppConfig> {
     let toml = format!(
         r##"
 [server]
@@ -79,8 +82,16 @@ fn register_session_returns_arc_with_correct_fields() {
     assert_eq!(session.target_port, 443);
     assert_eq!(session.source_ip, "10.0.0.1");
     assert_eq!(session.protocol, "ssh");
-    assert_eq!(session.bytes_up.load(std::sync::atomic::Ordering::Relaxed), 0);
-    assert_eq!(session.bytes_down.load(std::sync::atomic::Ordering::Relaxed), 0);
+    assert_eq!(
+        session.bytes_up.load(std::sync::atomic::Ordering::Relaxed),
+        0
+    );
+    assert_eq!(
+        session
+            .bytes_down
+            .load(std::sync::atomic::Ordering::Relaxed),
+        0
+    );
 }
 
 #[test]
@@ -399,8 +410,12 @@ fn session_snapshot_captures_correct_fields() {
     let session = engine.register_session("alice", "example.com", 443, "10.0.0.1", "ssh");
 
     // Update byte counters
-    session.bytes_up.store(1024, std::sync::atomic::Ordering::Relaxed);
-    session.bytes_down.store(2048, std::sync::atomic::Ordering::Relaxed);
+    session
+        .bytes_up
+        .store(1024, std::sync::atomic::Ordering::Relaxed);
+    session
+        .bytes_down
+        .store(2048, std::sync::atomic::Ordering::Relaxed);
 
     let snapshots = engine.get_sessions();
     assert_eq!(snapshots.len(), 1);
@@ -427,8 +442,12 @@ fn session_snapshot_reflects_atomic_counter_updates() {
     assert_eq!(snap1[0].bytes_down, 0);
 
     // Update counters
-    session.bytes_up.fetch_add(100, std::sync::atomic::Ordering::Relaxed);
-    session.bytes_down.fetch_add(200, std::sync::atomic::Ordering::Relaxed);
+    session
+        .bytes_up
+        .fetch_add(100, std::sync::atomic::Ordering::Relaxed);
+    session
+        .bytes_down
+        .fetch_add(200, std::sync::atomic::Ordering::Relaxed);
 
     // New snapshot should reflect updates
     let snap2 = engine.get_sessions();
@@ -445,7 +464,9 @@ fn live_session_snapshot_method_creates_independent_copy() {
     let snapshot = session.snapshot();
 
     // Modify atomic counters after snapshot
-    session.bytes_up.store(999, std::sync::atomic::Ordering::Relaxed);
+    session
+        .bytes_up
+        .store(999, std::sync::atomic::Ordering::Relaxed);
 
     // Snapshot should retain original value (it's a copy)
     assert_eq!(snapshot.bytes_up, 0);

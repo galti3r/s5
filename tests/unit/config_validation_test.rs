@@ -161,7 +161,13 @@ password_hash = "{FAKE_HASH}"
     let config = parse_config(&toml).unwrap();
     assert!(config.geoip.enabled);
     assert_eq!(
-        config.geoip.database_path.as_ref().unwrap().to_str().unwrap(),
+        config
+            .geoip
+            .database_path
+            .as_ref()
+            .unwrap()
+            .to_str()
+            .unwrap(),
         "/tmp/GeoLite2-Country.mmdb"
     );
     assert_eq!(config.geoip.allowed_countries.len(), 3);

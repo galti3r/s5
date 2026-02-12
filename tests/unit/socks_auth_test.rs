@@ -1,4 +1,6 @@
-use s5::socks::auth::{read_credentials, send_auth_result, AUTH_FAILURE, AUTH_SUCCESS, SUBNEG_VERSION};
+use s5::socks::auth::{
+    read_credentials, send_auth_result, AUTH_FAILURE, AUTH_SUCCESS, SUBNEG_VERSION,
+};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 #[tokio::test]
@@ -8,8 +10,17 @@ async fn read_credentials_valid() {
     // RFC 1929: [version=0x01, ulen=5, "alice", plen=4, "pass"]
     let payload: Vec<u8> = vec![
         SUBNEG_VERSION,
-        5, b'a', b'l', b'i', b'c', b'e',
-        4, b'p', b'a', b's', b's',
+        5,
+        b'a',
+        b'l',
+        b'i',
+        b'c',
+        b'e',
+        4,
+        b'p',
+        b'a',
+        b's',
+        b's',
     ];
 
     tokio::spawn(async move {
@@ -17,7 +28,9 @@ async fn read_credentials_valid() {
         client.shutdown().await.unwrap();
     });
 
-    let creds = read_credentials(&mut server).await.expect("should parse valid credentials");
+    let creds = read_credentials(&mut server)
+        .await
+        .expect("should parse valid credentials");
     assert_eq!(creds.username, "alice");
     assert_eq!(&*creds.password, "pass");
 }
@@ -28,9 +41,7 @@ async fn read_credentials_bad_version() {
 
     // Send wrong version byte (0x02 instead of 0x01)
     let payload: Vec<u8> = vec![
-        0x02,
-        5, b'a', b'l', b'i', b'c', b'e',
-        4, b'p', b'a', b's', b's',
+        0x02, 5, b'a', b'l', b'i', b'c', b'e', 4, b'p', b'a', b's', b's',
     ];
 
     tokio::spawn(async move {
@@ -61,9 +72,18 @@ async fn send_auth_result_success() {
     });
 
     let mut buf = [0u8; 2];
-    client.read_exact(&mut buf).await.expect("should read 2-byte response");
-    assert_eq!(buf[0], SUBNEG_VERSION, "first byte should be subneg version");
-    assert_eq!(buf[1], AUTH_SUCCESS, "second byte should be AUTH_SUCCESS (0x00)");
+    client
+        .read_exact(&mut buf)
+        .await
+        .expect("should read 2-byte response");
+    assert_eq!(
+        buf[0], SUBNEG_VERSION,
+        "first byte should be subneg version"
+    );
+    assert_eq!(
+        buf[1], AUTH_SUCCESS,
+        "second byte should be AUTH_SUCCESS (0x00)"
+    );
 }
 
 #[tokio::test]
@@ -76,7 +96,16 @@ async fn send_auth_result_failure() {
     });
 
     let mut buf = [0u8; 2];
-    client.read_exact(&mut buf).await.expect("should read 2-byte response");
-    assert_eq!(buf[0], SUBNEG_VERSION, "first byte should be subneg version");
-    assert_eq!(buf[1], AUTH_FAILURE, "second byte should be AUTH_FAILURE (0x01)");
+    client
+        .read_exact(&mut buf)
+        .await
+        .expect("should read 2-byte response");
+    assert_eq!(
+        buf[0], SUBNEG_VERSION,
+        "first byte should be subneg version"
+    );
+    assert_eq!(
+        buf[1], AUTH_FAILURE,
+        "second byte should be AUTH_FAILURE (0x01)"
+    );
 }

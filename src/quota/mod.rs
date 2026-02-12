@@ -74,7 +74,8 @@ impl UserBandwidthState {
         if now >= daily {
             self.daily_bytes.store(0, Ordering::Relaxed);
             self.daily_connections.store(0, Ordering::Relaxed);
-            self.daily_reset.store(next_day_boundary(now), Ordering::Release);
+            self.daily_reset
+                .store(next_day_boundary(now), Ordering::Release);
         }
 
         // Monthly reset
@@ -82,7 +83,8 @@ impl UserBandwidthState {
         if now >= monthly {
             self.monthly_bytes.store(0, Ordering::Relaxed);
             self.monthly_connections.store(0, Ordering::Relaxed);
-            self.monthly_reset.store(next_month_boundary(now), Ordering::Release);
+            self.monthly_reset
+                .store(next_month_boundary(now), Ordering::Release);
         }
     }
 }
@@ -383,7 +385,8 @@ impl QuotaTracker {
     /// Update server-level limits (called on config reload).
     pub fn update_config(&self, limits: &LimitsConfig) {
         let server_bw_limit = limits.max_bandwidth_mbps * 1_000_000 / 8;
-        self.server_bandwidth_limit_bps.store(server_bw_limit, Ordering::Relaxed);
+        self.server_bandwidth_limit_bps
+            .store(server_bw_limit, Ordering::Relaxed);
     }
 
     /// Clean up stale user entries (no activity in the last `max_idle_secs` seconds).
@@ -418,9 +421,13 @@ impl QuotaTracker {
     ) {
         let state = self.get_user(username);
         state.daily_bytes.store(daily_bytes, Ordering::Relaxed);
-        state.daily_connections.store(daily_connections, Ordering::Relaxed);
+        state
+            .daily_connections
+            .store(daily_connections, Ordering::Relaxed);
         state.monthly_bytes.store(monthly_bytes, Ordering::Relaxed);
-        state.monthly_connections.store(monthly_connections, Ordering::Relaxed);
+        state
+            .monthly_connections
+            .store(monthly_connections, Ordering::Relaxed);
         state.total_bytes.store(total_bytes, Ordering::Relaxed);
     }
 
@@ -449,8 +456,8 @@ fn next_month_boundary(now: u64) -> u64 {
     } else {
         (dt.year(), dt.month() + 1)
     };
-    let midnight = chrono::NaiveTime::from_hms_opt(0, 0, 0)
-        .expect("00:00:00 is always a valid time");
+    let midnight =
+        chrono::NaiveTime::from_hms_opt(0, 0, 0).expect("00:00:00 is always a valid time");
     let next_month = NaiveDateTime::new(
         chrono::NaiveDate::from_ymd_opt(year, month, 1).unwrap_or(dt.naive_utc().date()),
         midnight,
@@ -544,10 +551,14 @@ mod tests {
             connections_per_minute: 0,
             connections_per_hour: 0,
         };
-        assert!(tracker.check_connection_rate("alice", &rate, &limits).is_ok());
+        assert!(tracker
+            .check_connection_rate("alice", &rate, &limits)
+            .is_ok());
         tracker.record_connection("alice", None).unwrap();
         tracker.record_connection("alice", None).unwrap();
-        assert!(tracker.check_connection_rate("alice", &rate, &limits).is_err());
+        assert!(tracker
+            .check_connection_rate("alice", &rate, &limits)
+            .is_err());
     }
 
     #[test]

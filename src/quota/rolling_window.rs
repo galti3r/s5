@@ -65,11 +65,16 @@ impl RollingWindow {
         }
 
         // Try to claim the advance
-        if self.last_advance.compare_exchange(last, now, Ordering::AcqRel, Ordering::Relaxed).is_err() {
+        if self
+            .last_advance
+            .compare_exchange(last, now, Ordering::AcqRel, Ordering::Relaxed)
+            .is_err()
+        {
             return; // Another thread advanced
         }
 
-        let buckets_to_clear = (elapsed_secs / self.bucket_secs as u64).min(self.buckets.len() as u64) as usize;
+        let buckets_to_clear =
+            (elapsed_secs / self.bucket_secs as u64).min(self.buckets.len() as u64) as usize;
 
         if buckets_to_clear >= self.buckets.len() {
             // Entire window has passed, zero everything

@@ -24,5 +24,7 @@ pub async fn broadcast_message(
     } else {
         0
     };
-    ApiResponse::ok(BroadcastResponse { delivered_to: count })
+    ApiResponse::ok(BroadcastResponse {
+        delivered_to: count,
+    })
 }

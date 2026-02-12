@@ -7,7 +7,10 @@ use std::sync::Arc;
 
 const FAKE_HASH: &str = "argon2id-fakehash-for-testing";
 
-fn create_test_config(max_connections: u32, max_connections_per_user: u32) -> Arc<s5::config::types::AppConfig> {
+fn create_test_config(
+    max_connections: u32,
+    max_connections_per_user: u32,
+) -> Arc<s5::config::types::AppConfig> {
     let toml = format!(
         r##"
 [server]
@@ -39,11 +42,15 @@ async fn test_acquire_connection_succeeds_under_global_limit() {
     let config = create_test_config(3, 2);
     let engine = create_engine(config);
 
-    let guard1 = engine.acquire_connection("alice", 2).expect("First connection should succeed");
+    let guard1 = engine
+        .acquire_connection("alice", 2)
+        .expect("First connection should succeed");
     assert_eq!(engine.active_connections(), 1);
     assert_eq!(engine.user_connections("alice"), 1);
 
-    let guard2 = engine.acquire_connection("alice", 2).expect("Second connection should succeed");
+    let guard2 = engine
+        .acquire_connection("alice", 2)
+        .expect("Second connection should succeed");
     assert_eq!(engine.active_connections(), 2);
     assert_eq!(engine.user_connections("alice"), 2);
 
@@ -56,8 +63,12 @@ async fn test_acquire_connection_fails_at_global_limit() {
     let config = create_test_config(2, 5);
     let engine = create_engine(config);
 
-    let _guard1 = engine.acquire_connection("alice", 5).expect("First connection should succeed");
-    let _guard2 = engine.acquire_connection("bob", 5).expect("Second connection should succeed");
+    let _guard1 = engine
+        .acquire_connection("alice", 5)
+        .expect("First connection should succeed");
+    let _guard2 = engine
+        .acquire_connection("bob", 5)
+        .expect("Second connection should succeed");
 
     assert_eq!(engine.active_connections(), 2);
 
@@ -72,8 +83,12 @@ async fn test_acquire_connection_fails_at_per_user_limit() {
     let config = create_test_config(10, 2);
     let engine = create_engine(config);
 
-    let _guard1 = engine.acquire_connection("alice", 2).expect("First connection should succeed");
-    let _guard2 = engine.acquire_connection("alice", 2).expect("Second connection should succeed");
+    let _guard1 = engine
+        .acquire_connection("alice", 2)
+        .expect("First connection should succeed");
+    let _guard2 = engine
+        .acquire_connection("alice", 2)
+        .expect("Second connection should succeed");
 
     assert_eq!(engine.user_connections("alice"), 2);
 
@@ -88,7 +103,9 @@ async fn test_acquire_connection_rollback_on_per_user_failure() {
     let config = create_test_config(10, 1);
     let engine = create_engine(config);
 
-    let _guard1 = engine.acquire_connection("alice", 1).expect("First connection should succeed");
+    let _guard1 = engine
+        .acquire_connection("alice", 1)
+        .expect("First connection should succeed");
     assert_eq!(engine.active_connections(), 1);
     assert_eq!(engine.user_connections("alice"), 1);
 
@@ -106,8 +123,12 @@ async fn test_connection_guard_drop_decrements_counters() {
     let config = create_test_config(10, 5);
     let engine = create_engine(config);
 
-    let guard1 = engine.acquire_connection("alice", 5).expect("Connection should succeed");
-    let guard2 = engine.acquire_connection("alice", 5).expect("Connection should succeed");
+    let guard1 = engine
+        .acquire_connection("alice", 5)
+        .expect("Connection should succeed");
+    let guard2 = engine
+        .acquire_connection("alice", 5)
+        .expect("Connection should succeed");
 
     assert_eq!(engine.active_connections(), 2);
     assert_eq!(engine.user_connections("alice"), 2);
@@ -129,7 +150,9 @@ async fn test_connection_guard_drop_cleans_up_dashmap_entry() {
     let engine = create_engine(config);
 
     {
-        let _guard = engine.acquire_connection("alice", 5).expect("Connection should succeed");
+        let _guard = engine
+            .acquire_connection("alice", 5)
+            .expect("Connection should succeed");
         assert_eq!(engine.user_connections("alice"), 1);
         // DashMap entry should exist
     }
@@ -138,7 +161,9 @@ async fn test_connection_guard_drop_cleans_up_dashmap_entry() {
     assert_eq!(engine.user_connections("alice"), 0);
 
     // Verify we can still acquire new connections for this user
-    let _guard = engine.acquire_connection("alice", 5).expect("Connection should succeed");
+    let _guard = engine
+        .acquire_connection("alice", 5)
+        .expect("Connection should succeed");
     assert_eq!(engine.user_connections("alice"), 1);
 }
 
@@ -147,10 +172,18 @@ async fn test_multiple_users_can_acquire_separate_slots() {
     let config = create_test_config(10, 3);
     let engine = create_engine(config);
 
-    let _alice1 = engine.acquire_connection("alice", 3).expect("Alice connection 1 should succeed");
-    let _alice2 = engine.acquire_connection("alice", 3).expect("Alice connection 2 should succeed");
-    let _bob1 = engine.acquire_connection("bob", 3).expect("Bob connection 1 should succeed");
-    let _bob2 = engine.acquire_connection("bob", 3).expect("Bob connection 2 should succeed");
+    let _alice1 = engine
+        .acquire_connection("alice", 3)
+        .expect("Alice connection 1 should succeed");
+    let _alice2 = engine
+        .acquire_connection("alice", 3)
+        .expect("Alice connection 2 should succeed");
+    let _bob1 = engine
+        .acquire_connection("bob", 3)
+        .expect("Bob connection 1 should succeed");
+    let _bob2 = engine
+        .acquire_connection("bob", 3)
+        .expect("Bob connection 2 should succeed");
 
     assert_eq!(engine.active_connections(), 4);
     assert_eq!(engine.user_connections("alice"), 2);
@@ -162,13 +195,19 @@ async fn test_mixed_global_and_per_user_limits() {
     let config = create_test_config(3, 2);
     let engine = create_engine(config);
 
-    let _alice1 = engine.acquire_connection("alice", 2).expect("Alice connection 1 should succeed");
-    let _alice2 = engine.acquire_connection("alice", 2).expect("Alice connection 2 should succeed");
+    let _alice1 = engine
+        .acquire_connection("alice", 2)
+        .expect("Alice connection 1 should succeed");
+    let _alice2 = engine
+        .acquire_connection("alice", 2)
+        .expect("Alice connection 2 should succeed");
 
     // Alice hits per-user limit
     assert!(engine.acquire_connection("alice", 2).is_err());
 
-    let _bob1 = engine.acquire_connection("bob", 2).expect("Bob connection 1 should succeed");
+    let _bob1 = engine
+        .acquire_connection("bob", 2)
+        .expect("Bob connection 1 should succeed");
 
     // Global limit reached (3 total)
     assert_eq!(engine.active_connections(), 3);
@@ -177,7 +216,9 @@ async fn test_mixed_global_and_per_user_limits() {
     drop(_alice1);
 
     // Now bob can get one more (global has space, bob has per-user space)
-    let _bob2 = engine.acquire_connection("bob", 2).expect("Bob connection 2 should succeed");
+    let _bob2 = engine
+        .acquire_connection("bob", 2)
+        .expect("Bob connection 2 should succeed");
     assert_eq!(engine.active_connections(), 3);
 }
 
@@ -189,7 +230,10 @@ fn test_is_dangerous_ip_blocks_loopback_ipv4() {
     assert!(is_dangerous_ip(&loopback), "Should block IPv4 loopback");
 
     let loopback_other = "127.0.0.100".parse::<IpAddr>().unwrap();
-    assert!(is_dangerous_ip(&loopback_other), "Should block IPv4 loopback range");
+    assert!(
+        is_dangerous_ip(&loopback_other),
+        "Should block IPv4 loopback range"
+    );
 }
 
 #[test]
@@ -213,19 +257,31 @@ fn test_is_dangerous_ip_blocks_private_ranges_ipv4() {
 #[test]
 fn test_is_dangerous_ip_blocks_link_local() {
     let link_local_v4 = "169.254.1.1".parse::<IpAddr>().unwrap();
-    assert!(is_dangerous_ip(&link_local_v4), "Should block IPv4 link-local");
+    assert!(
+        is_dangerous_ip(&link_local_v4),
+        "Should block IPv4 link-local"
+    );
 
     let link_local_v6 = "fe80::1".parse::<IpAddr>().unwrap();
-    assert!(is_dangerous_ip(&link_local_v6), "Should block IPv6 link-local");
+    assert!(
+        is_dangerous_ip(&link_local_v6),
+        "Should block IPv6 link-local"
+    );
 }
 
 #[test]
 fn test_is_dangerous_ip_blocks_multicast() {
     let multicast_v4 = "224.0.0.1".parse::<IpAddr>().unwrap();
-    assert!(is_dangerous_ip(&multicast_v4), "Should block IPv4 multicast");
+    assert!(
+        is_dangerous_ip(&multicast_v4),
+        "Should block IPv4 multicast"
+    );
 
     let multicast_v6 = "ff00::1".parse::<IpAddr>().unwrap();
-    assert!(is_dangerous_ip(&multicast_v6), "Should block IPv6 multicast");
+    assert!(
+        is_dangerous_ip(&multicast_v6),
+        "Should block IPv6 multicast"
+    );
 }
 
 #[test]
@@ -255,5 +311,8 @@ fn test_is_dangerous_ip_blocks_unspecified() {
 #[test]
 fn test_is_dangerous_ip_blocks_broadcast() {
     let broadcast = "255.255.255.255".parse::<IpAddr>().unwrap();
-    assert!(is_dangerous_ip(&broadcast), "Should block broadcast address");
+    assert!(
+        is_dangerous_ip(&broadcast),
+        "Should block broadcast address"
+    );
 }

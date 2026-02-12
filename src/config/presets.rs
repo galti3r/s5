@@ -211,7 +211,10 @@ mod tests {
         let toml = bastion_preset("admin", FAKE_HASH);
         let config = parse_config(&toml).expect("bastion preset should parse");
         assert_eq!(config.users[0].username, "admin");
-        assert_eq!(config.acl.default_policy, crate::config::types::AclPolicyConfig::Deny);
+        assert_eq!(
+            config.acl.default_policy,
+            crate::config::types::AclPolicyConfig::Deny
+        );
         assert!(config.security.ban_enabled);
     }
 
@@ -220,7 +223,10 @@ mod tests {
         let toml = proxy_preset("proxy_user", FAKE_HASH);
         let config = parse_config(&toml).expect("proxy preset should parse");
         assert_eq!(config.users[0].username, "proxy_user");
-        assert_eq!(config.acl.default_policy, crate::config::types::AclPolicyConfig::Allow);
+        assert_eq!(
+            config.acl.default_policy,
+            crate::config::types::AclPolicyConfig::Allow
+        );
         assert!(config.server.socks5_listen.is_some());
     }
 

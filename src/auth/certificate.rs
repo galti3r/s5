@@ -77,11 +77,7 @@ pub fn parse_trusted_ca_keys(ca_key_strings: &[String]) -> Vec<TrustedCa> {
 ///
 /// # Returns
 /// `true` if the certificate is valid and trusted, `false` otherwise.
-pub fn verify_certificate(
-    cert: &Certificate,
-    trusted_cas: &[TrustedCa],
-    username: &str,
-) -> bool {
+pub fn verify_certificate(cert: &Certificate, trusted_cas: &[TrustedCa], username: &str) -> bool {
     if trusted_cas.is_empty() {
         return false;
     }
@@ -126,11 +122,7 @@ pub fn verify_certificate(
     // Check critical options: we recognize "force-command" and "source-address"
     // but do not enforce them (they are informational for the CA policy).
     // Any unrecognized critical option should cause rejection per the spec.
-    let recognized_options = [
-        "force-command",
-        "source-address",
-        "verify-required",
-    ];
+    let recognized_options = ["force-command", "source-address", "verify-required"];
     for (name, _value) in cert.critical_options().iter() {
         if !recognized_options.contains(&name.as_str()) {
             debug!(
@@ -265,7 +257,7 @@ mod tests {
         let mut cert_builder = ssh_key::certificate::Builder::new_with_random_nonce(
             &mut rand::rngs::OsRng,
             user_key_data,
-            0, // valid_after: epoch (always valid from the start)
+            0,                // valid_after: epoch (always valid from the start)
             0xFFFF_FFFF_FFFE, // valid_before: far future
         )
         .expect("Certificate builder creation failed");
@@ -402,9 +394,7 @@ mod tests {
         .expect("Builder creation failed");
 
         cert_builder.serial(1).expect("set serial failed");
-        cert_builder
-            .key_id("host-cert")
-            .expect("set key_id failed");
+        cert_builder.key_id("host-cert").expect("set key_id failed");
         cert_builder
             .cert_type(CertType::Host)
             .expect("set cert_type failed");
@@ -521,8 +511,8 @@ mod tests {
         let mut cert_builder = ssh_key::certificate::Builder::new_with_random_nonce(
             &mut rand::rngs::OsRng,
             user_key_data,
-            1,  // valid_after
-            2,  // valid_before - both in the past
+            1, // valid_after
+            2, // valid_before - both in the past
         )
         .expect("Builder creation failed");
 

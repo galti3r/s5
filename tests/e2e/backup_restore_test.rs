@@ -64,12 +64,9 @@ async fn start_api_with_quota(config: s5::config::types::AppConfig) -> (u16, Arc
     };
 
     let _task = tokio::spawn(async move {
-        let _ = s5::api::start_api_server(
-            &api_addr,
-            state,
-            tokio_util::sync::CancellationToken::new(),
-        )
-        .await;
+        let _ =
+            s5::api::start_api_server(&api_addr, state, tokio_util::sync::CancellationToken::new())
+                .await;
     });
     tokio::time::sleep(std::time::Duration::from_millis(100)).await;
 
@@ -99,7 +96,10 @@ async fn test_backup_empty_state() {
 
     let data = &body["data"];
     assert!(data["version"].is_string(), "version should be a string");
-    assert!(data["timestamp"].is_string(), "timestamp should be a string");
+    assert!(
+        data["timestamp"].is_string(),
+        "timestamp should be a string"
+    );
     let bans = data["bans"].as_array().unwrap();
     assert!(bans.is_empty(), "bans should be empty");
     let quotas = data["quotas"].as_object().unwrap();

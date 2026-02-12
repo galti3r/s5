@@ -207,8 +207,5 @@ async fn test_ws_valid_token_without_upgrade_headers() {
         status, 401,
         "valid token should not return 401; got {status}"
     );
-    assert_ne!(
-        status, 404,
-        "route should exist; got 404"
-    );
+    assert_ne!(status, 404, "route should exist; got 404");
 }

@@ -161,7 +161,11 @@ mod tests {
         // Attempt 1: at ~80ms (fails), wait 160ms
         // Attempt 2: at ~240ms (succeeds, listener started at ~120ms)
         let result = connect_with_retry("127.0.0.1", port, 3, 80).await;
-        assert!(result.is_ok(), "should succeed after listener starts: {:?}", result.err());
+        assert!(
+            result.is_ok(),
+            "should succeed after listener starts: {:?}",
+            result.err()
+        );
 
         handle.await.unwrap();
     }

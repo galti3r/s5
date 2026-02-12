@@ -149,9 +149,7 @@ fn ipv6_public_allowed() {
     assert!(!is_dangerous_ip(
         &"2607:f8b0:4004:800::200e".parse().unwrap()
     ));
-    assert!(!is_dangerous_ip(
-        &"2001:4860:4860::8888".parse().unwrap()
-    ));
+    assert!(!is_dangerous_ip(&"2001:4860:4860::8888".parse().unwrap()));
 }
 
 // =========================================================================
@@ -172,9 +170,7 @@ fn ipv4_mapped_ipv6_private_blocked() {
 
 #[test]
 fn ipv4_mapped_ipv6_link_local_blocked() {
-    assert!(is_dangerous_ip(
-        &"::ffff:169.254.169.254".parse().unwrap()
-    ));
+    assert!(is_dangerous_ip(&"::ffff:169.254.169.254".parse().unwrap()));
 }
 
 #[test]

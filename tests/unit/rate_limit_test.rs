@@ -133,9 +133,18 @@ fn ip_limiter_cleanup_stale_with_zero_duration_removes_all() {
     limiter.cleanup_stale(Duration::from_secs(0));
 
     // After cleanup, a new check should succeed because a fresh bucket is created
-    assert!(limiter.check(&ip1), "fresh bucket should allow after cleanup");
-    assert!(limiter.check(&ip2), "fresh bucket should allow after cleanup");
-    assert!(limiter.check(&ip3), "fresh bucket should allow after cleanup");
+    assert!(
+        limiter.check(&ip1),
+        "fresh bucket should allow after cleanup"
+    );
+    assert!(
+        limiter.check(&ip2),
+        "fresh bucket should allow after cleanup"
+    );
+    assert!(
+        limiter.check(&ip3),
+        "fresh bucket should allow after cleanup"
+    );
 }
 
 #[test]
@@ -151,7 +160,10 @@ fn ip_limiter_cleanup_stale_preserves_recent_entries() {
     limiter.cleanup_stale(Duration::from_secs(3600));
 
     // The entry should still exist and still be rate-limited
-    assert!(!limiter.check(&ip), "recently used entry should persist after cleanup");
+    assert!(
+        !limiter.check(&ip),
+        "recently used entry should persist after cleanup"
+    );
 }
 
 #[test]
@@ -316,7 +328,10 @@ fn user_limiter_cleanup_stale_preserves_recent() {
     limiter.cleanup_stale(Duration::from_secs(3600));
 
     // Alice should still be rate-limited
-    assert!(!limiter.check("alice", 1), "recently used entry should persist");
+    assert!(
+        !limiter.check("alice", 1),
+        "recently used entry should persist"
+    );
 }
 
 #[test]
@@ -368,13 +383,21 @@ fn ip_limiter_many_different_ips_tracked() {
     // Track many different IPs without hitting the MAX_TRACKED_IPS limit
     for i in 0..100u8 {
         let ip: IpAddr = format!("10.0.0.{}", i).parse().unwrap();
-        assert!(limiter.check(&ip), "first check for 10.0.0.{} should pass", i);
+        assert!(
+            limiter.check(&ip),
+            "first check for 10.0.0.{} should pass",
+            i
+        );
     }
 
     // Each should now be exhausted
     for i in 0..100u8 {
         let ip: IpAddr = format!("10.0.0.{}", i).parse().unwrap();
-        assert!(!limiter.check(&ip), "second check for 10.0.0.{} should fail", i);
+        assert!(
+            !limiter.check(&ip),
+            "second check for 10.0.0.{} should fail",
+            i
+        );
     }
 }
 

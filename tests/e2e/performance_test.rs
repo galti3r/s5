@@ -152,10 +152,7 @@ async fn test_concurrent_ssh_connections() {
             .await
             .unwrap();
 
-            let ok = h
-                .authenticate_password("testuser", "pass")
-                .await
-                .unwrap();
+            let ok = h.authenticate_password("testuser", "pass").await.unwrap();
             assert!(ok, "connection {} should auth", i);
         });
         handles.push(handle);

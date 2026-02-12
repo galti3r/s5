@@ -47,13 +47,10 @@ async fn test_ssh_local_forward_works() {
 
     // Read echo back
     let mut buf = vec![0u8; 1024];
-    let n = tokio::time::timeout(
-        Duration::from_secs(5),
-        stream.read(&mut buf),
-    )
-    .await
-    .expect("timeout reading echo")
-    .expect("read error");
+    let n = tokio::time::timeout(Duration::from_secs(5), stream.read(&mut buf))
+        .await
+        .expect("timeout reading echo")
+        .expect("read error");
 
     assert_eq!(
         &buf[..n],

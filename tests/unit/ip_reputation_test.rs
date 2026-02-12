@@ -31,7 +31,10 @@ fn test_new_ip_has_zero_score() {
 fn test_new_manager_has_no_scores() {
     let mgr = IpReputationManager::new(true, 100);
     let scores = mgr.all_scores();
-    assert!(scores.is_empty(), "new manager should have no score entries");
+    assert!(
+        scores.is_empty(),
+        "new manager should have no score entries"
+    );
 }
 
 // ===========================================================================
@@ -54,7 +57,10 @@ fn test_add_score_increments() {
     assert_score_approx(score2, 20, "two auth failures");
 
     // Score should strictly increase after a failure
-    assert!(score2 > score1, "score should increase after second failure");
+    assert!(
+        score2 > score1,
+        "score should increase after second failure"
+    );
 }
 
 #[test]
@@ -65,7 +71,10 @@ fn test_acl_denial_adds_five() {
     mgr.record_acl_denial(&ip);
     let score = mgr.get_score(&ip);
     assert_score_approx(score, 5, "ACL denial");
-    assert!(score >= 4, "ACL denial should add at least 4 (approximately 5)");
+    assert!(
+        score >= 4,
+        "ACL denial should add at least 4 (approximately 5)"
+    );
 }
 
 #[test]
@@ -76,7 +85,10 @@ fn test_rapid_connections_adds_three() {
     mgr.record_rapid_connections(&ip);
     let score = mgr.get_score(&ip);
     assert_score_approx(score, 3, "rapid connections");
-    assert!(score >= 2, "rapid connections should add at least 2 (approximately 3)");
+    assert!(
+        score >= 2,
+        "rapid connections should add at least 2 (approximately 3)"
+    );
 }
 
 #[test]
@@ -109,7 +121,11 @@ fn test_score_never_goes_below_zero() {
 
     // Auth success on a fresh IP (score 0) should not underflow
     mgr.record_auth_success(&ip);
-    assert_eq!(mgr.get_score(&ip), 0, "score should be clamped to 0, never negative");
+    assert_eq!(
+        mgr.get_score(&ip),
+        0,
+        "score should be clamped to 0, never negative"
+    );
 }
 
 #[test]
@@ -120,7 +136,11 @@ fn test_multiple_successes_on_zero_stay_zero() {
     for _ in 0..10 {
         mgr.record_auth_success(&ip);
     }
-    assert_eq!(mgr.get_score(&ip), 0, "multiple successes on fresh IP should stay 0");
+    assert_eq!(
+        mgr.get_score(&ip),
+        0,
+        "multiple successes on fresh IP should stay 0"
+    );
 }
 
 #[test]
@@ -128,14 +148,17 @@ fn test_mixed_events_accumulate_correctly() {
     let mgr = IpReputationManager::new(true, 100);
     let ip: IpAddr = "10.0.0.7".parse().unwrap();
 
-    mgr.record_auth_failure(&ip);      // +10 => ~10
-    mgr.record_acl_denial(&ip);        // +5  => ~15
-    mgr.record_rapid_connections(&ip);  // +3  => ~18
+    mgr.record_auth_failure(&ip); // +10 => ~10
+    mgr.record_acl_denial(&ip); // +5  => ~15
+    mgr.record_rapid_connections(&ip); // +3  => ~18
     let score_before = mgr.get_score(&ip);
     assert_score_approx(score_before, 18, "mixed events sum");
-    assert!(score_before >= 16, "mixed positive events should sum to at least 16");
+    assert!(
+        score_before >= 16,
+        "mixed positive events should sum to at least 16"
+    );
 
-    mgr.record_auth_success(&ip);      // -5  => ~13
+    mgr.record_auth_success(&ip); // -5  => ~13
     let score_after = mgr.get_score(&ip);
     assert!(
         score_after < score_before,
@@ -320,7 +343,11 @@ fn test_cleanup_removes_low_scores() {
 
     // Entry should survive cleanup since 3.0 >= 1.0
     let scores = mgr.all_scores();
-    assert_eq!(scores.len(), 1, "entry with score ~3 should survive cleanup");
+    assert_eq!(
+        scores.len(),
+        1,
+        "entry with score ~3 should survive cleanup"
+    );
 }
 
 #[test]
@@ -365,7 +392,11 @@ fn test_cleanup_is_idempotent() {
     mgr.cleanup();
 
     let scores = mgr.all_scores();
-    assert_eq!(scores.len(), 1, "repeated cleanup should not remove valid entries");
+    assert_eq!(
+        scores.len(),
+        1,
+        "repeated cleanup should not remove valid entries"
+    );
 }
 
 #[test]
@@ -381,7 +412,10 @@ fn test_cleanup_removes_zero_score_entries() {
     mgr.cleanup();
 
     let scores = mgr.all_scores();
-    assert!(scores.is_empty(), "entry with score 0 should be removed by cleanup");
+    assert!(
+        scores.is_empty(),
+        "entry with score 0 should be removed by cleanup"
+    );
 }
 
 // ===========================================================================
@@ -473,9 +507,9 @@ fn test_auth_failure_count_not_incremented_by_success() {
     let mgr = IpReputationManager::new(true, 200);
     let ip: IpAddr = "198.51.100.2".parse().unwrap();
 
-    mgr.record_auth_failure(&ip);  // +10 => ~10
-    mgr.record_auth_success(&ip);  // -5  => ~5
-    mgr.record_auth_failure(&ip);  // +10 => ~15
+    mgr.record_auth_failure(&ip); // +10 => ~10
+    mgr.record_auth_success(&ip); // -5  => ~5
+    mgr.record_auth_failure(&ip); // +10 => ~15
 
     let score = mgr.get_score(&ip);
     assert_score_approx(score, 15, "net score after failure/success/failure");
@@ -493,8 +527,8 @@ fn test_acl_denial_increments_failure_count() {
     let mgr = IpReputationManager::new(true, 200);
     let ip: IpAddr = "198.51.100.3".parse().unwrap();
 
-    mgr.record_acl_denial(&ip);         // +5  => ~5
-    mgr.record_rapid_connections(&ip);   // +3  => ~8
+    mgr.record_acl_denial(&ip); // +5  => ~5
+    mgr.record_rapid_connections(&ip); // +3  => ~8
 
     let score = mgr.get_score(&ip);
     assert_score_approx(score, 8, "ACL denial + rapid connections");
@@ -516,10 +550,10 @@ fn test_different_ips_are_independent() {
     let ip2: IpAddr = "10.0.0.2".parse().unwrap();
     let ip3: IpAddr = "10.0.0.3".parse().unwrap();
 
-    mgr.record_auth_failure(&ip1);          // ip1: ~10
-    mgr.record_auth_failure(&ip2);          // ip2: ~10
-    mgr.record_auth_failure(&ip2);          // ip2: ~20
-    mgr.record_rapid_connections(&ip3);     // ip3: ~3
+    mgr.record_auth_failure(&ip1); // ip1: ~10
+    mgr.record_auth_failure(&ip2); // ip2: ~10
+    mgr.record_auth_failure(&ip2); // ip2: ~20
+    mgr.record_rapid_connections(&ip3); // ip3: ~3
 
     assert_score_approx(mgr.get_score(&ip1), 10, "ip1 score");
     assert_score_approx(mgr.get_score(&ip2), 20, "ip2 score");
@@ -539,7 +573,7 @@ fn test_ipv4_and_ipv6_are_independent() {
     let ipv6: IpAddr = "::1".parse().unwrap();
 
     mgr.record_auth_failure(&ipv4); // +10
-    mgr.record_acl_denial(&ipv6);   // +5
+    mgr.record_acl_denial(&ipv6); // +5
 
     let score_v4 = mgr.get_score(&ipv4);
     let score_v6 = mgr.get_score(&ipv6);
@@ -601,7 +635,10 @@ fn test_all_scores_empty_when_disabled() {
     mgr.record_auth_failure(&ip);
 
     let scores = mgr.all_scores();
-    assert!(scores.is_empty(), "disabled manager all_scores should be empty");
+    assert!(
+        scores.is_empty(),
+        "disabled manager all_scores should be empty"
+    );
 }
 
 // ===========================================================================
@@ -635,7 +672,10 @@ fn test_ban_threshold_one() {
     assert!(!mgr.should_ban(&ip), "fresh IP should not be banned");
 
     mgr.record_rapid_connections(&ip); // +3, well above threshold of 1
-    assert!(mgr.should_ban(&ip), "any event should trigger ban with threshold 1");
+    assert!(
+        mgr.should_ban(&ip),
+        "any event should trigger ban with threshold 1"
+    );
 }
 
 #[test]

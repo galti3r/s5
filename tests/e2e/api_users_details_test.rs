@@ -23,7 +23,9 @@ async fn users_without_details_has_no_connections_field() {
 
     assert_eq!(resp.status(), 200);
     let body: serde_json::Value = resp.json().await.unwrap();
-    let users = body["data"].as_array().expect("response data should be an array");
+    let users = body["data"]
+        .as_array()
+        .expect("response data should be an array");
     assert!(!users.is_empty(), "should have at least one user");
 
     for user in users {
@@ -55,7 +57,9 @@ async fn users_with_details_true_has_connections_field() {
 
     assert_eq!(resp.status(), 200);
     let body: serde_json::Value = resp.json().await.unwrap();
-    let users = body["data"].as_array().expect("response data should be an array");
+    let users = body["data"]
+        .as_array()
+        .expect("response data should be an array");
     assert!(!users.is_empty(), "should have at least one user");
 
     for user in users {
@@ -92,7 +96,9 @@ async fn users_with_details_1_also_works() {
 
     assert_eq!(resp.status(), 200);
     let body: serde_json::Value = resp.json().await.unwrap();
-    let users = body["data"].as_array().expect("response data should be an array");
+    let users = body["data"]
+        .as_array()
+        .expect("response data should be an array");
     assert!(!users.is_empty(), "should have at least one user");
 
     for user in users {
@@ -129,7 +135,9 @@ async fn users_with_details_false_excludes() {
 
     assert_eq!(resp.status(), 200);
     let body: serde_json::Value = resp.json().await.unwrap();
-    let users = body["data"].as_array().expect("response data should be an array");
+    let users = body["data"]
+        .as_array()
+        .expect("response data should be an array");
     assert!(!users.is_empty(), "should have at least one user");
 
     for user in users {
@@ -166,7 +174,9 @@ async fn users_details_bytes_transferred_field() {
 
     assert_eq!(resp.status(), 200);
     let body: serde_json::Value = resp.json().await.unwrap();
-    let users = body["data"].as_array().expect("response data should be an array");
+    let users = body["data"]
+        .as_array()
+        .expect("response data should be an array");
     assert!(!users.is_empty(), "should have at least one user");
 
     for user in users {

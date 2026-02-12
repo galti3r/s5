@@ -20,7 +20,10 @@ pub(crate) fn socks5_handshake_timeout(config: &AppConfig) -> Duration {
 
 /// Load TLS config if cert/key are provided.
 fn load_tls_config(config: &AppConfig) -> Result<Option<Arc<tokio_rustls::rustls::ServerConfig>>> {
-    let (cert_path, key_path) = match (&config.server.socks5_tls_cert, &config.server.socks5_tls_key) {
+    let (cert_path, key_path) = match (
+        &config.server.socks5_tls_cert,
+        &config.server.socks5_tls_key,
+    ) {
         (Some(c), Some(k)) => (c, k),
         _ => return Ok(None),
     };
@@ -56,8 +59,7 @@ pub async fn start_socks5_server(
     ctx: Arc<AppContext>,
     shutdown: CancellationToken,
 ) -> Result<()> {
-    let tls_acceptor = load_tls_config(&ctx.config)?
-        .map(tokio_rustls::TlsAcceptor::from);
+    let tls_acceptor = load_tls_config(&ctx.config)?.map(tokio_rustls::TlsAcceptor::from);
 
     let listener = TcpListener::bind(listen_addr).await?;
 

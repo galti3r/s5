@@ -46,5 +46,10 @@ fn bench_generate_password(c: &mut Criterion) {
     group.finish();
 }
 
-criterion_group!(benches, bench_hash_password, bench_verify_password, bench_generate_password);
+criterion_group!(
+    benches,
+    bench_hash_password,
+    bench_verify_password,
+    bench_generate_password
+);
 criterion_main!(benches);

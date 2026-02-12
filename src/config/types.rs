@@ -981,7 +981,14 @@ impl fmt::Debug for ApiConfig {
         f.debug_struct("ApiConfig")
             .field("enabled", &self.enabled)
             .field("listen", &self.listen)
-            .field("token", &if self.token.is_empty() { "(empty)" } else { "***" })
+            .field(
+                "token",
+                &if self.token.is_empty() {
+                    "(empty)"
+                } else {
+                    "***"
+                },
+            )
             .finish()
     }
 }
@@ -1133,10 +1140,16 @@ impl fmt::Debug for UserConfig {
         f.debug_struct("UserConfig")
             .field("username", &self.username)
             .field("password_hash", &self.password_hash.as_ref().map(|_| "***"))
-            .field("authorized_keys", &format!("[{} keys]", self.authorized_keys.len()))
+            .field(
+                "authorized_keys",
+                &format!("[{} keys]", self.authorized_keys.len()),
+            )
             .field("allow_forwarding", &self.allow_forwarding)
             .field("allow_shell", &self.allow_shell)
-            .field("max_new_connections_per_minute", &self.max_new_connections_per_minute)
+            .field(
+                "max_new_connections_per_minute",
+                &self.max_new_connections_per_minute,
+            )
             .field("max_bandwidth_kbps", &self.max_bandwidth_kbps)
             .field("source_ips", &self.source_ips)
             .field("expires_at", &self.expires_at)

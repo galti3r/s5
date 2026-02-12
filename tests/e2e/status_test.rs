@@ -2,8 +2,8 @@
 mod helpers;
 
 use helpers::*;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 
 // ---------------------------------------------------------------------------
 // Test 1: Health endpoint returns 200 "ok"
@@ -40,7 +40,13 @@ password_hash = "{hash}"
     let m = metrics.clone();
     let maint = maintenance.clone();
     let _task = tokio::spawn(async move {
-        let _ = s5::api::start_metrics_server(&metrics_addr, m, maint, tokio_util::sync::CancellationToken::new()).await;
+        let _ = s5::api::start_metrics_server(
+            &metrics_addr,
+            m,
+            maint,
+            tokio_util::sync::CancellationToken::new(),
+        )
+        .await;
     });
     tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
 
@@ -90,7 +96,13 @@ password_hash = "{hash}"
     let m = metrics.clone();
     let maint = maintenance.clone();
     let _task = tokio::spawn(async move {
-        let _ = s5::api::start_metrics_server(&metrics_addr, m, maint, tokio_util::sync::CancellationToken::new()).await;
+        let _ = s5::api::start_metrics_server(
+            &metrics_addr,
+            m,
+            maint,
+            tokio_util::sync::CancellationToken::new(),
+        )
+        .await;
     });
     tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
 
@@ -144,7 +156,13 @@ password_hash = "{hash}"
     let m = metrics.clone();
     let maint = maintenance.clone();
     let _task = tokio::spawn(async move {
-        let _ = s5::api::start_metrics_server(&metrics_addr, m, maint, tokio_util::sync::CancellationToken::new()).await;
+        let _ = s5::api::start_metrics_server(
+            &metrics_addr,
+            m,
+            maint,
+            tokio_util::sync::CancellationToken::new(),
+        )
+        .await;
     });
     tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
 

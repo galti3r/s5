@@ -1,5 +1,5 @@
-use s5::audit::AuditLogger;
 use s5::audit::events::AuditEvent;
+use s5::audit::AuditLogger;
 use std::net::SocketAddr;
 
 #[tokio::test]
@@ -39,17 +39,29 @@ fn critical_events_are_classified_correctly() {
     assert!(acl_deny.is_critical(), "AclDeny should be critical");
 
     let config_reload = AuditEvent::config_reload(5, true, None);
-    assert!(config_reload.is_critical(), "ConfigReload should be critical");
+    assert!(
+        config_reload.is_critical(),
+        "ConfigReload should be critical"
+    );
 
     // Non-critical events
     let auth_success = AuditEvent::auth_success("user", &addr, "password");
-    assert!(!auth_success.is_critical(), "AuthSuccess should NOT be critical");
+    assert!(
+        !auth_success.is_critical(),
+        "AuthSuccess should NOT be critical"
+    );
 
     let conn_new = AuditEvent::connection_new(&addr, "ssh");
-    assert!(!conn_new.is_critical(), "ConnectionNew should NOT be critical");
+    assert!(
+        !conn_new.is_critical(),
+        "ConnectionNew should NOT be critical"
+    );
 
     let conn_closed = AuditEvent::connection_closed(&addr, "ssh");
-    assert!(!conn_closed.is_critical(), "ConnectionClosed should NOT be critical");
+    assert!(
+        !conn_closed.is_critical(),
+        "ConnectionClosed should NOT be critical"
+    );
 }
 
 #[tokio::test]

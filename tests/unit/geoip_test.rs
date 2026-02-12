@@ -1,5 +1,5 @@
-use std::net::IpAddr;
 use s5::geoip::GeoIpService;
+use std::net::IpAddr;
 
 // ---------------------------------------------------------------------------
 // Test 1: Disabled GeoIP → is_allowed always returns true

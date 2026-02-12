@@ -64,9 +64,9 @@ pub fn validate_domain(domain: &str) -> Result<(), String> {
     // Reject purely numeric domains that are NOT valid IP addresses.
     // SOCKS5 clients legitimately send IP addresses as domain strings (e.g. "127.0.0.1"),
     // so we allow those but reject nonsensical purely numeric labels like "1234567890".
-    let all_numeric = labels.iter().all(|label| {
-        !label.is_empty() && label.chars().all(|c| c.is_ascii_digit())
-    });
+    let all_numeric = labels
+        .iter()
+        .all(|label| !label.is_empty() && label.chars().all(|c| c.is_ascii_digit()));
     if all_numeric {
         // Allow if it parses as a valid IP address
         if domain.parse::<std::net::IpAddr>().is_err() {
@@ -93,10 +93,7 @@ pub fn validate_domain(domain: &str) -> Result<(), String> {
 
         // Labels cannot start or end with a hyphen (RFC 952 / RFC 1123)
         if label.starts_with('-') || label.ends_with('-') {
-            return Err(format!(
-                "label '{}' starts or ends with a hyphen",
-                label
-            ));
+            return Err(format!("label '{}' starts or ends with a hyphen", label));
         }
 
         // Only allow alphanumeric characters and hyphens (RFC 1123)
@@ -153,7 +150,9 @@ pub enum SocksRequest {
 
 /// Read a SOCKS5 request (CONNECT or UDP ASSOCIATE), returns SocksRequest.
 /// This is a more general version of read_connect_request.
-pub async fn read_request(stream: &mut (impl AsyncRead + AsyncWrite + Unpin)) -> Result<SocksRequest> {
+pub async fn read_request(
+    stream: &mut (impl AsyncRead + AsyncWrite + Unpin),
+) -> Result<SocksRequest> {
     let ver = stream.read_u8().await?;
     if ver != SOCKS_VERSION {
         anyhow::bail!("invalid SOCKS version in request: {}", ver);
@@ -176,7 +175,11 @@ pub async fn read_request(stream: &mut (impl AsyncRead + AsyncWrite + Unpin)) ->
                 anyhow::bail!("empty domain name in SOCKS5 request");
             }
             if len > MAX_DOMAIN_LENGTH {
-                anyhow::bail!("domain name too long: {} bytes (max {})", len, MAX_DOMAIN_LENGTH);
+                anyhow::bail!(
+                    "domain name too long: {} bytes (max {})",
+                    len,
+                    MAX_DOMAIN_LENGTH
+                );
             }
             let mut domain_bytes = vec![0u8; len];
             stream.read_exact(&mut domain_bytes).await?;
@@ -197,7 +200,12 @@ pub async fn read_request(stream: &mut (impl AsyncRead + AsyncWrite + Unpin)) ->
             TargetAddr::Ipv6(ip, port)
         }
         _ => {
-            send_reply(stream, REPLY_ADDRESS_TYPE_NOT_SUPPORTED, &TargetAddr::Ipv4([0; 4], 0)).await?;
+            send_reply(
+                stream,
+                REPLY_ADDRESS_TYPE_NOT_SUPPORTED,
+                &TargetAddr::Ipv4([0; 4], 0),
+            )
+            .await?;
             anyhow::bail!("unsupported address type: {}", atyp);
         }
     };
@@ -206,7 +214,12 @@ pub async fn read_request(stream: &mut (impl AsyncRead + AsyncWrite + Unpin)) ->
         CMD_CONNECT => Ok(SocksRequest::Connect(target)),
         CMD_UDP_ASSOCIATE => Ok(SocksRequest::UdpAssociate(target)),
         _ => {
-            send_reply(stream, REPLY_COMMAND_NOT_SUPPORTED, &TargetAddr::Ipv4([0; 4], 0)).await?;
+            send_reply(
+                stream,
+                REPLY_COMMAND_NOT_SUPPORTED,
+                &TargetAddr::Ipv4([0; 4], 0),
+            )
+            .await?;
             anyhow::bail!("unsupported command: {}", cmd);
         }
     }
@@ -326,7 +339,10 @@ pub async fn read_greeting(stream: &mut (impl AsyncRead + Unpin)) -> Result<Vec<
 }
 
 /// Send method selection response
-pub async fn send_method_selection(stream: &mut (impl AsyncWrite + Unpin), method: u8) -> Result<()> {
+pub async fn send_method_selection(
+    stream: &mut (impl AsyncWrite + Unpin),
+    method: u8,
+) -> Result<()> {
     stream
         .write_all(&[SOCKS_VERSION, method])
         .await
@@ -335,7 +351,9 @@ pub async fn send_method_selection(stream: &mut (impl AsyncWrite + Unpin), metho
 }
 
 /// Read the SOCKS5 CONNECT request, returns the target address
-pub async fn read_connect_request(stream: &mut (impl AsyncRead + AsyncWrite + Unpin)) -> Result<TargetAddr> {
+pub async fn read_connect_request(
+    stream: &mut (impl AsyncRead + AsyncWrite + Unpin),
+) -> Result<TargetAddr> {
     let ver = stream.read_u8().await?;
     if ver != SOCKS_VERSION {
         anyhow::bail!("invalid SOCKS version in request: {}", ver);
@@ -407,7 +425,11 @@ pub async fn read_connect_request(stream: &mut (impl AsyncRead + AsyncWrite + Un
 }
 
 /// Send a SOCKS5 reply
-pub async fn send_reply(stream: &mut (impl AsyncWrite + Unpin), reply: u8, bind_addr: &TargetAddr) -> Result<()> {
+pub async fn send_reply(
+    stream: &mut (impl AsyncWrite + Unpin),
+    reply: u8,
+    bind_addr: &TargetAddr,
+) -> Result<()> {
     let mut buf = vec![SOCKS_VERSION, reply, 0x00]; // ver, rep, rsv
 
     match bind_addr {
@@ -564,7 +586,7 @@ mod tests {
         assert!(validate_domain("12345").is_err()); // not a valid IP
         assert!(validate_domain("999.999.999.999").is_err()); // not a valid IP
         assert!(validate_domain("0.0.0.0.0").is_err()); // too many octets
-        // Valid IPs sent as domain strings are allowed (common SOCKS5 client behavior)
+                                                        // Valid IPs sent as domain strings are allowed (common SOCKS5 client behavior)
         assert!(validate_domain("127.0.0.1").is_ok());
         assert!(validate_domain("192.168.1.1").is_ok());
         assert!(validate_domain("1.2.3.4").is_ok());

@@ -383,7 +383,11 @@ async fn test_retry_with_success() {
     // Retry: first attempt at ~0ms fails, second at ~60ms fails,
     // third at ~180ms succeeds (listener up at ~80ms).
     let result = connect_with_retry("127.0.0.1", port, 4, 60).await;
-    assert!(result.is_ok(), "should succeed on retry: {:?}", result.err());
+    assert!(
+        result.is_ok(),
+        "should succeed on retry: {:?}",
+        result.err()
+    );
 
     let (mut stream, addr) = result.unwrap();
     assert_eq!(addr.port(), port);
@@ -463,7 +467,11 @@ async fn test_ipv6_address_formatting() {
     let port = listener.local_addr().unwrap().port();
 
     let result = connect_with_retry("::1", port, 0, 100).await;
-    assert!(result.is_ok(), "should connect via IPv6: {:?}", result.err());
+    assert!(
+        result.is_ok(),
+        "should connect via IPv6: {:?}",
+        result.err()
+    );
     let (_stream, addr) = result.unwrap();
     assert_eq!(addr.port(), port);
     assert!(addr.ip().is_loopback(), "address should be IPv6 loopback");

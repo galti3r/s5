@@ -49,7 +49,9 @@ pub async fn run_with_config_path(config: AppConfig, config_path: Option<PathBuf
         config.logging.audit_max_files,
         webhook_dispatcher.clone(),
     ));
-    let metrics = Arc::new(MetricsRegistry::with_max_labels(config.metrics.max_metric_labels));
+    let metrics = Arc::new(MetricsRegistry::with_max_labels(
+        config.metrics.max_metric_labels,
+    ));
     let auth_service = Arc::new(RwLock::new(AuthService::new(&config)?));
     let mut proxy_engine = ProxyEngine::new(config.clone(), audit.clone());
     proxy_engine.set_metrics(metrics.clone());
@@ -114,7 +116,11 @@ pub async fn run_with_config_path(config: AppConfig, config_path: Option<PathBuf
     }
 
     // Spawn maintenance window scheduler (checks every 60s if a window is active)
-    spawn_maintenance_scheduler(maintenance.clone(), config.maintenance_windows.clone(), audit.clone());
+    spawn_maintenance_scheduler(
+        maintenance.clone(),
+        config.maintenance_windows.clone(),
+        audit.clone(),
+    );
 
     let shutdown_timeout = config.server.shutdown_timeout;
 

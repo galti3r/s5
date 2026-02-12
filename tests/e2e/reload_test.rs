@@ -66,7 +66,9 @@ allow_shell = true
 
     let api_addr = format!("127.0.0.1:{api_port}");
     let _task = tokio::spawn(async move {
-        let _ = s5::api::start_api_server(&api_addr, state, tokio_util::sync::CancellationToken::new()).await;
+        let _ =
+            s5::api::start_api_server(&api_addr, state, tokio_util::sync::CancellationToken::new())
+                .await;
     });
     tokio::time::sleep(std::time::Duration::from_millis(100)).await;
 
@@ -141,7 +143,9 @@ allow_shell = true
 
     let api_addr = format!("127.0.0.1:{api_port}");
     let _task = tokio::spawn(async move {
-        let _ = s5::api::start_api_server(&api_addr, state, tokio_util::sync::CancellationToken::new()).await;
+        let _ =
+            s5::api::start_api_server(&api_addr, state, tokio_util::sync::CancellationToken::new())
+                .await;
     });
     tokio::time::sleep(std::time::Duration::from_millis(100)).await;
 
@@ -215,7 +219,9 @@ allow_shell = true
 
     let api_addr = format!("127.0.0.1:{api_port}");
     let _task = tokio::spawn(async move {
-        let _ = s5::api::start_api_server(&api_addr, state, tokio_util::sync::CancellationToken::new()).await;
+        let _ =
+            s5::api::start_api_server(&api_addr, state, tokio_util::sync::CancellationToken::new())
+                .await;
     });
     tokio::time::sleep(std::time::Duration::from_millis(100)).await;
 

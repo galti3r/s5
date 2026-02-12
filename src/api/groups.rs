@@ -81,11 +81,8 @@ pub async fn get_group(
         // Check if the group exists at all (might have no current users)
         let group_names = auth.user_store().group_names();
         if !group_names.contains(&name) {
-            return ApiResponse::err(
-                StatusCode::NOT_FOUND,
-                format!("group '{}' not found", name),
-            )
-            .into_response();
+            return ApiResponse::err(StatusCode::NOT_FOUND, format!("group '{}' not found", name))
+                .into_response();
         }
     }
 

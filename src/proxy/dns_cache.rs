@@ -138,9 +138,8 @@ impl DnsCache {
     /// Remove expired entries.
     pub fn cleanup_expired(&self) {
         let now = Instant::now();
-        self.cache.retain(|_, entry| {
-            now.duration_since(entry.inserted_at) <= entry.ttl
-        });
+        self.cache
+            .retain(|_, entry| now.duration_since(entry.inserted_at) <= entry.ttl);
     }
 
     pub fn len(&self) -> usize {
@@ -164,7 +163,10 @@ mod tests {
     use std::net::{Ipv4Addr, SocketAddrV4};
 
     fn addr(ip: [u8; 4], port: u16) -> SocketAddr {
-        SocketAddr::V4(SocketAddrV4::new(Ipv4Addr::new(ip[0], ip[1], ip[2], ip[3]), port))
+        SocketAddr::V4(SocketAddrV4::new(
+            Ipv4Addr::new(ip[0], ip[1], ip[2], ip[3]),
+            port,
+        ))
     }
 
     #[test]
@@ -194,8 +196,16 @@ mod tests {
         // Cache with max 2 entries, 0-second TTL (immediate expiry)
         let cache = DnsCache::new(1, 2); // 1 second TTL
 
-        cache.insert("a.com", vec![addr([1, 1, 1, 1], 80)], Some(Duration::from_millis(0)));
-        cache.insert("b.com", vec![addr([2, 2, 2, 2], 80)], Some(Duration::from_millis(0)));
+        cache.insert(
+            "a.com",
+            vec![addr([1, 1, 1, 1], 80)],
+            Some(Duration::from_millis(0)),
+        );
+        cache.insert(
+            "b.com",
+            vec![addr([2, 2, 2, 2], 80)],
+            Some(Duration::from_millis(0)),
+        );
 
         // Both entries should be expired, so inserting a third should succeed
         // after cleanup (no LRU needed)
