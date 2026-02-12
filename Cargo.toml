@@ -293,7 +293,7 @@ path = "tests/e2e/cli_e2e_test.rs"
 
 [dependencies]
 # SSH protocol
-russh = "0.46.0"
+russh = "0.57.0"
 russh-keys = "0.46.0"
 
 # SSH certificate parsing and validation (transitive via russh-keys, explicit for CA cert auth)
