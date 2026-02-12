@@ -147,7 +147,9 @@ jobs:
         run: cargo install cargo-tarpaulin
 
       - name: Generate coverage
-        run: cargo tarpaulin --all-targets --fail-under 90 --out xml --output-dir coverage/
+        run: cargo tarpaulin --skip-clean --jobs 1 --fail-under 90 --out xml --output-dir coverage/
+        env:
+          CARGO_BUILD_JOBS: "2"
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
