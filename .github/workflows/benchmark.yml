@@ -46,7 +46,7 @@ jobs:
           restore-keys: ${{ runner.os }}-cargo-bench-
 
       - name: Run benchmarks
-        run: cargo bench --all -- --output-format bencher | tee bench-output.txt
+        run: cargo bench --benches -- --output-format bencher 2>&1 | tee bench-output.txt
 
       - name: Store benchmark results
         uses: benchmark-action/github-action-benchmark@v1
