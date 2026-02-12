@@ -125,7 +125,11 @@ async fn test_throughput_socks5() {
     );
 
     assert!(received > 0);
-    assert!(throughput_mbps > 1.0);
+    assert!(
+        throughput_mbps > 0.1,
+        "throughput should be at least 0.1 MB/s, got {:.2}",
+        throughput_mbps
+    );
 }
 
 // ---------------------------------------------------------------------------

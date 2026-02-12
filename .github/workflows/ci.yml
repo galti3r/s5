@@ -145,6 +145,7 @@ jobs:
 
       - name: Free disk and add swap
         run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc 2>/dev/null || true
           sudo fallocate -l 4G /swapfile
           sudo chmod 600 /swapfile
           sudo mkswap /swapfile
@@ -156,7 +157,8 @@ jobs:
       - name: Generate coverage
         run: cargo tarpaulin --skip-clean --jobs 1 --fail-under 90 --out xml --output-dir coverage/
         env:
-          CARGO_BUILD_JOBS: "2"
+          CARGO_BUILD_JOBS: "1"
+          RUSTFLAGS: "-C linker=cc"
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
