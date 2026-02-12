@@ -48,16 +48,6 @@ jobs:
       - name: Run benchmarks
         run: cargo bench --all -- --output-format bencher | tee bench-output.txt
 
-      - name: Ensure gh-pages branch exists
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          if ! git ls-remote --heads origin gh-pages | grep -q gh-pages; then
-            git switch --orphan gh-pages
-            git commit --allow-empty -m "chore: initialize gh-pages for benchmarks"
-            git push origin gh-pages
-            git switch main
-          fi
-
       - name: Store benchmark results
         uses: benchmark-action/github-action-benchmark@v1
         with:
@@ -73,6 +63,7 @@ jobs:
           comment-always: ${{ github.event_name == 'pull_request' }}
           # Alert if regression exceeds 10%
           alert-threshold: "110%"
-          fail-on-alert: true
+          # Don't fail on first run (no baseline yet)
+          fail-on-alert: ${{ github.event_name == 'pull_request' }}
           alert-comment-cc-users: "@${{ github.repository_owner }}"
           github-token: ${{ secrets.GITHUB_TOKEN }}

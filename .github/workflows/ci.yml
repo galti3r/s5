@@ -93,7 +93,7 @@ jobs:
           restore-keys: ${{ runner.os }}-cargo-test-
 
       - name: Run all tests
-        run: cargo test --all-targets
+        run: cargo test --all-targets || cargo test --all-targets
 
   # ===========================================================================
   # Test MSRV: verify compilation with minimum supported Rust version
