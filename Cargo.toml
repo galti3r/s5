@@ -203,7 +203,7 @@ governor = "0.7.0"
 axum = { version = "0.7.9", features = ["ws"] }
 
 # Metrics
-prometheus-client = "0.22.3"
+prometheus-client = "0.24.0"
 
 # GeoIP
 maxminddb = "0.27.0"
