@@ -383,7 +383,7 @@ tokio-rustls = "0.26"
 rustls-pemfile = "2"
 
 # DNS resolver with TTL support
-hickory-resolver = "0.24"
+hickory-resolver = "0.25"
 
 # TCP socket options (keepalive, nodelay)
 socket2 = "0.5"
