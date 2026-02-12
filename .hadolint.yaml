@@ -1,0 +1,16 @@
+# hadolint configuration for s5
+# https://github.com/hadolint/hadolint
+#
+# Run: hadolint Containerfile
+# Install: https://github.com/hadolint/hadolint#install
+
+failure-threshold: warning
+
+trustedRegistries:
+  - docker.io
+  - gcr.io
+  - ghcr.io
+
+ignored:
+  # Build deps are ephemeral in multi-stage builds, pinning not required
+  - DL3008

@@ -1,0 +1,524 @@
+[package]
+name = "s5"
+version = "0.1.0"
+edition = "2021"
+description = "Lightweight SSH server with SOCKS5 proxy, shell emulation, and ACL"
+license = "MIT"
+rust-version = "1.75"
+repository = "https://github.com/galti3r/s5"
+readme = "README.md"
+keywords = ["ssh", "socks5", "proxy", "firewall", "acl"]
+categories = ["command-line-utilities", "network-programming"]
+exclude = [".github/", ".forgejo/", ".gitlab-ci.yml", "scripts/", "tests/", "contrib/", "docs/", "PLAN-*.md", "PROGRESS-*.md"]
+
+[[bin]]
+name = "s5"
+path = "src/main.rs"
+
+[[test]]
+name = "unit_config"
+path = "tests/unit/config_test.rs"
+
+[[test]]
+name = "unit_acl"
+path = "tests/unit/acl_test.rs"
+
+[[test]]
+name = "unit_password"
+path = "tests/unit/password_test.rs"
+
+[[test]]
+name = "unit_shell_parser"
+path = "tests/unit/shell_parser_test.rs"
+
+[[test]]
+name = "unit_shell_commands"
+path = "tests/unit/shell_commands_test.rs"
+
+[[test]]
+name = "unit_socks_auth"
+path = "tests/unit/socks_auth_test.rs"
+
+[[test]]
+name = "unit_socks_protocol"
+path = "tests/unit/socks_protocol_test.rs"
+
+[[test]]
+name = "unit_socks_protocol_async"
+path = "tests/unit/socks_protocol_async_test.rs"
+
+[[test]]
+name = "unit_proxy_engine"
+path = "tests/unit/proxy_engine_test.rs"
+
+[[test]]
+name = "unit_security"
+path = "tests/unit/security_test.rs"
+
+[[test]]
+name = "unit_audit"
+path = "tests/unit/audit_test.rs"
+
+[[test]]
+name = "unit_auth_service"
+path = "tests/unit/auth_service_test.rs"
+
+[[test]]
+name = "unit_ssh_keys"
+path = "tests/unit/ssh_keys_test.rs"
+
+[[test]]
+name = "unit_pubkey"
+path = "tests/unit/pubkey_test.rs"
+
+[[test]]
+name = "unit_forwarder"
+path = "tests/unit/forwarder_test.rs"
+
+[[test]]
+name = "unit_api"
+path = "tests/unit/api_test.rs"
+
+[[test]]
+name = "unit_connector"
+path = "tests/unit/connector_test.rs"
+
+[[test]]
+name = "unit_geoip"
+path = "tests/unit/geoip_test.rs"
+
+[[test]]
+name = "unit_webhook"
+path = "tests/unit/webhook_test.rs"
+
+[[test]]
+name = "unit_cli"
+path = "tests/unit/cli_test.rs"
+
+[[test]]
+name = "unit_socks_handler"
+path = "tests/unit/socks_handler_test.rs"
+
+[[test]]
+name = "unit_context"
+path = "tests/unit/context_test.rs"
+
+[[test]]
+name = "unit_config_validation"
+path = "tests/unit/config_validation_test.rs"
+
+[[test]]
+name = "unit_pre_auth_check"
+path = "tests/unit/pre_auth_check_test.rs"
+
+[[test]]
+name = "unit_user_source_ip"
+path = "tests/unit/user_source_ip_test.rs"
+
+[[test]]
+name = "unit_audit_dropped"
+path = "tests/unit/audit_dropped_test.rs"
+
+[[test]]
+name = "unit_socks_protocol_fuzz"
+path = "tests/unit/socks_protocol_fuzz_test.rs"
+
+[[test]]
+name = "unit_dns_cache"
+path = "tests/unit/dns_cache_test.rs"
+
+[[test]]
+name = "unit_socks_reply_codes"
+path = "tests/unit/socks_reply_codes_test.rs"
+
+[[test]]
+name = "unit_sse_ticket"
+path = "tests/unit/sse_ticket_test.rs"
+
+[[test]]
+name = "unit_ip_rate_limiter"
+path = "tests/unit/ip_rate_limiter_test.rs"
+
+[[test]]
+name = "unit_metrics_cardinality"
+path = "tests/unit/metrics_cardinality_test.rs"
+
+[[test]]
+name = "e2e_reload"
+path = "tests/e2e/reload_test.rs"
+
+[[test]]
+name = "e2e_socks5_server"
+path = "tests/e2e/socks5_server_test.rs"
+
+[[test]]
+name = "e2e_autoban"
+path = "tests/e2e/autoban_test.rs"
+
+[[test]]
+name = "e2e_metrics_server"
+path = "tests/e2e/metrics_server_test.rs"
+
+[[test]]
+name = "e2e_ssh_session"
+path = "tests/e2e/ssh_session_test.rs"
+
+[[test]]
+name = "e2e_audit_trail"
+path = "tests/e2e/audit_trail_test.rs"
+
+[[test]]
+name = "e2e_auth"
+path = "tests/e2e/auth_test.rs"
+
+[[test]]
+name = "e2e_shell"
+path = "tests/e2e/shell_test.rs"
+
+[[test]]
+name = "e2e_forwarding"
+path = "tests/e2e/forwarding_test.rs"
+
+[[test]]
+name = "e2e_rejection"
+path = "tests/e2e/rejection_test.rs"
+
+[[test]]
+name = "e2e_acl_fqdn"
+path = "tests/e2e/acl_fqdn_test.rs"
+
+[[test]]
+name = "e2e_acl_subnet"
+path = "tests/e2e/acl_subnet_test.rs"
+
+[[test]]
+name = "e2e_acl_combined"
+path = "tests/e2e/acl_combined_test.rs"
+
+[[test]]
+name = "e2e_acl_ipv6"
+path = "tests/e2e/acl_ipv6_test.rs"
+
+[[test]]
+name = "e2e_socks5_standalone"
+path = "tests/e2e/socks5_standalone_test.rs"
+
+[[test]]
+name = "e2e_api_dashboard"
+path = "tests/e2e/api_dashboard_test.rs"
+
+[[test]]
+name = "e2e_status"
+path = "tests/e2e/status_test.rs"
+
+[[test]]
+name = "e2e_webhook"
+path = "tests/e2e/webhook_test.rs"
+
+[[test]]
+name = "e2e_performance"
+path = "tests/e2e/performance_test.rs"
+
+[[test]]
+name = "e2e_webhook_retry"
+path = "tests/e2e/webhook_retry_test.rs"
+
+[[test]]
+name = "e2e_api_users_details"
+path = "tests/e2e/api_users_details_test.rs"
+
+[[test]]
+name = "unit_proxy_connection_details"
+path = "tests/unit/proxy_connection_details_test.rs"
+
+[[test]]
+name = "e2e_socks5_timeout"
+path = "tests/e2e/socks5_timeout_test.rs"
+
+[[test]]
+name = "unit_socks5_tls_config"
+path = "tests/unit/socks5_tls_config_test.rs"
+
+[[test]]
+name = "e2e_sse_ticket"
+path = "tests/e2e/sse_ticket_e2e_test.rs"
+
+[[test]]
+name = "e2e_shell_commands"
+path = "tests/e2e/shell_commands_test.rs"
+
+[[test]]
+name = "unit_new_features"
+path = "tests/unit/new_features_test.rs"
+
+[[test]]
+name = "unit_quota"
+path = "tests/unit/quota_test.rs"
+
+[[test]]
+name = "e2e_quota_api"
+path = "tests/e2e/quota_api_test.rs"
+
+[[test]]
+name = "unit_audit_improvements"
+path = "tests/unit/audit_improvements_test.rs"
+
+[[test]]
+name = "e2e_api_audit_improvements"
+path = "tests/e2e/api_audit_improvements_test.rs"
+
+[[test]]
+name = "e2e_api_groups"
+path = "tests/e2e/api_groups_test.rs"
+
+[[test]]
+name = "e2e_api_sessions"
+path = "tests/e2e/api_sessions_test.rs"
+
+[[test]]
+name = "e2e_sse_payload"
+path = "tests/e2e/sse_payload_test.rs"
+
+[[test]]
+name = "e2e_ws"
+path = "tests/e2e/ws_test.rs"
+
+[[test]]
+name = "e2e_backup_restore"
+path = "tests/e2e/backup_restore_test.rs"
+
+[[test]]
+name = "e2e_cli"
+path = "tests/e2e/cli_e2e_test.rs"
+
+[dependencies]
+# SSH protocol
+russh = "0.46.0"
+russh-keys = "0.46.0"
+
+# SSH certificate parsing and validation (transitive via russh-keys, explicit for CA cert auth)
+ssh-key = { version = "0.6.7", features = ["ed25519", "rsa", "std"] }
+
+# Async runtime
+tokio = { version = "1.42.0", features = ["full"] }
+
+# CLI
+clap = { version = "4.5.23", features = ["derive", "env"] }
+clap_complete = "4.5"
+clap_mangen = "0.2"
+
+# Serialization / Config
+serde = { version = "1.0.216", features = ["derive"] }
+serde_json = "1.0.133"
+toml = "0.8.19"
+
+# Logging
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["json", "env-filter"] }
+
+# Password hashing
+argon2 = "0.5.3"
+password-hash = "0.5.0"
+
+# Networking / ACL
+ipnet = { version = "2.10.1", features = ["serde"] }
+
+# Error handling
+anyhow = "1.0.94"
+thiserror = "2.0.9"
+
+# Concurrency
+dashmap = "6.1.0"
+
+# Rate limiting
+governor = "0.7.0"
+
+# HTTP server (metrics + API)
+axum = { version = "0.7.9", features = ["ws"] }
+
+# Metrics
+prometheus-client = "0.22.3"
+
+# GeoIP
+maxminddb = "0.24.0"
+
+# HTTP client (webhooks)
+reqwest = { version = "0.12.12", default-features = false, features = ["rustls-tls", "json"] }
+
+# HMAC signatures / fingerprint
+hmac = "0.12.1"
+sha2 = "0.10.8"
+hex = "0.4.3"
+base64 = "0.22.1"
+
+# Constant-time comparison
+subtle = "2.6"
+
+# TOTP 2FA
+totp-rs = { version = "5.6", features = ["gen_secret", "otpauth"] }
+
+# URL validation
+url = "2.5"
+
+# URL percent-decoding (transitive via axum, explicit for auth middleware)
+percent-encoding = "2.3"
+
+# Zeroize sensitive data
+zeroize = { version = "1.8", features = ["derive"] }
+
+# Date/time
+chrono = { version = "0.4.39", features = ["serde"] }
+
+# Async utilities
+async-trait = "0.1.83"
+
+# Async cancellation
+tokio-util = "0.7"
+
+# Async streams (SSE)
+tokio-stream = "0.1"
+
+# TLS for SOCKS5 standalone
+tokio-rustls = "0.26"
+rustls-pemfile = "2"
+
+# DNS resolver with TTL support
+hickory-resolver = "0.24"
+
+# TCP socket options (keepalive, nodelay)
+socket2 = "0.5"
+
+# Proxy header (for PROXY protocol)
+proxy-header = "0.1.2"
+
+# Rand for HMAC ticket nonce
+rand = "0.8"
+
+# Correlation IDs
+uuid = { version = "1.0", features = ["v4"] }
+
+[dev-dependencies]
+tokio-test = "0.4.4"
+tempfile = "3.14.0"
+assert_cmd = "2.0.16"
+predicates = "3.1.2"
+proptest = "1.5.0"
+criterion = { version = "0.5", features = ["html_reports", "async_tokio"] }
+chromiumoxide = { version = "0.8", default-features = false, features = ["tokio-runtime"] }
+futures = "0.3"
+ed25519-dalek = { version = "2.1.1", features = ["rand_core"] }
+
+[[bench]]
+name = "acl_bench"
+harness = false
+
+[[bench]]
+name = "password_bench"
+harness = false
+
+[[bench]]
+name = "config_bench"
+harness = false
+
+[[bench]]
+name = "socks5_bench"
+harness = false
+
+[[test]]
+name = "unit_acl_proptest"
+path = "tests/unit/acl_proptest.rs"
+
+[[test]]
+name = "unit_shell_parser_proptest"
+path = "tests/unit/shell_parser_proptest.rs"
+
+[[test]]
+name = "unit_config_proptest"
+path = "tests/unit/config_proptest.rs"
+
+[[test]]
+name = "e2e_browser_dashboard"
+path = "tests/e2e/browser_dashboard_test.rs"
+
+[[test]]
+name = "unit_alerting"
+path = "tests/unit/alerting_test.rs"
+
+[[test]]
+name = "unit_pool"
+path = "tests/unit/pool_test.rs"
+
+[[test]]
+name = "unit_ip_guard"
+path = "tests/unit/ip_guard_test.rs"
+
+[[test]]
+name = "unit_retry"
+path = "tests/unit/retry_test.rs"
+
+[[test]]
+name = "unit_totp_extraction"
+path = "tests/unit/totp_extraction_test.rs"
+
+[[test]]
+name = "unit_rate_limit"
+path = "tests/unit/rate_limit_test.rs"
+
+[[test]]
+name = "unit_audit_logger"
+path = "tests/unit/audit_logger_test.rs"
+
+[[test]]
+name = "unit_geoip_unit"
+path = "tests/unit/geoip_unit_test.rs"
+
+[[test]]
+name = "unit_connector_unit"
+path = "tests/unit/connector_unit_test.rs"
+
+[[test]]
+name = "unit_proxy_engine_unit"
+path = "tests/unit/proxy_engine_unit_test.rs"
+
+[[test]]
+name = "unit_forwarder_unit"
+path = "tests/unit/forwarder_unit_test.rs"
+
+[[test]]
+name = "unit_metrics_unit"
+path = "tests/unit/metrics_unit_test.rs"
+
+[[test]]
+name = "unit_ip_reputation"
+path = "tests/unit/ip_reputation_test.rs"
+
+[[test]]
+name = "unit_ssh_handler"
+path = "tests/unit/ssh_handler_test.rs"
+
+[[test]]
+name = "unit_certificate_auth"
+path = "tests/unit/certificate_auth_test.rs"
+
+[[test]]
+name = "unit_config_merge_edge_cases"
+path = "tests/unit/config_merge_edge_cases_test.rs"
+
+[[test]]
+name = "unit_proxy_acl_decision"
+path = "tests/unit/proxy_acl_decision_test.rs"
+
+[[test]]
+name = "unit_maintenance_window_edge_cases"
+path = "tests/unit/maintenance_window_edge_cases_test.rs"
+
+[[test]]
+name = "unit_server_logic"
+path = "tests/unit/server_logic_test.rs"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"

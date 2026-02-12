@@ -1,0 +1,84 @@
+# Multi-architecture cross-compilation Containerfile
+# Builds linux/amd64 and linux/arm64 from any host platform
+# Usage: docker buildx build --platform linux/amd64,linux/arm64 -f Containerfile.cross .
+#
+# Compatible with both Podman and Docker
+
+# --- Builder stage ---
+# BUILDPLATFORM = host arch (where the build runs)
+FROM --platform=$BUILDPLATFORM rust:1.88-slim-bookworm AS builder
+
+# TARGETARCH is injected by buildx (amd64 or arm64)
+ARG TARGETARCH
+
+WORKDIR /build
+
+# Install cross-compilation toolchain for arm64 if needed
+RUN if [ "$TARGETARCH" = "arm64" ]; then \
+        apt-get update && \
+        apt-get install -y --no-install-recommends \
+            gcc-aarch64-linux-gnu \
+            libc6-dev-arm64-cross && \
+        rm -rf /var/lib/apt/lists/*; \
+    fi
+
+# Add the appropriate Rust target
+RUN case "$TARGETARCH" in \
+        amd64) rustup target add x86_64-unknown-linux-gnu ;; \
+        arm64) rustup target add aarch64-unknown-linux-gnu ;; \
+        *) echo "Unsupported architecture: $TARGETARCH" && exit 1 ;; \
+    esac
+
+COPY Cargo.toml Cargo.lock* ./
+COPY src/ src/
+COPY assets/ assets/
+
+# Build with cross-compilation env vars for arm64
+# CC_aarch64_unknown_linux_gnu is required by the ring crate (via cc)
+RUN case "$TARGETARCH" in \
+        amd64) \
+            cargo build --release --target x86_64-unknown-linux-gnu && \
+            strip target/x86_64-unknown-linux-gnu/release/s5 && \
+            cp target/x86_64-unknown-linux-gnu/release/s5 /build/s5-binary \
+            ;; \
+        arm64) \
+            export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc && \
+            export CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc && \
+            cargo build --release --target aarch64-unknown-linux-gnu && \
+            aarch64-linux-gnu-strip target/aarch64-unknown-linux-gnu/release/s5 && \
+            cp target/aarch64-unknown-linux-gnu/release/s5 /build/s5-binary \
+            ;; \
+    esac
+
+# --- Runtime stage ---
+FROM debian:bookworm-slim
+
+LABEL org.opencontainers.image.title="s5" \
+      org.opencontainers.image.description="Lightweight SSH server with SOCKS5 proxy, shell emulation, and ACL" \
+      org.opencontainers.image.source="https://github.com/galti3r/s5" \
+      org.opencontainers.image.licenses="MIT"
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates && \
+    rm -rf /var/lib/apt/lists/* && \
+    groupadd -r s5 && useradd -r -g s5 -d /etc/s5 -s /usr/sbin/nologin s5 && \
+    mkdir -p /etc/s5 /var/log/s5 && \
+    chown -R s5:s5 /etc/s5 /var/log/s5
+
+COPY --from=builder /build/s5-binary /usr/local/bin/s5
+
+USER s5
+WORKDIR /etc/s5
+
+# SSH, SOCKS5, metrics/API
+EXPOSE 2222 1080 9090 9091
+
+VOLUME ["/etc/s5"]
+
+STOPSIGNAL SIGTERM
+
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+    CMD ["s5", "health-check", "--addr", "127.0.0.1:2222", "--timeout", "3"]
+
+ENTRYPOINT ["s5"]
+CMD ["--config", "/etc/s5/config.toml"]
