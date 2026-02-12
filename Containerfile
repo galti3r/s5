@@ -6,6 +6,7 @@ WORKDIR /build
 COPY Cargo.toml Cargo.lock* ./
 COPY src/ src/
 COPY assets/ assets/
+COPY benches/ benches/
 
 RUN cargo build --release && strip target/release/s5
 

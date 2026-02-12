@@ -32,6 +32,7 @@ RUN case "$TARGETARCH" in \
 COPY Cargo.toml Cargo.lock* ./
 COPY src/ src/
 COPY assets/ assets/
+COPY benches/ benches/
 
 # Build with cross-compilation env vars for arm64
 # CC_aarch64_unknown_linux_gnu is required by the ring crate (via cc)
