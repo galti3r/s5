@@ -429,11 +429,7 @@ async fn test_jitter_applied() {
 
     // Without jitter, both runs should be within a tight tolerance of each
     // other. We allow up to 50ms difference for scheduling variance.
-    let diff = if elapsed_a > elapsed_b {
-        elapsed_a - elapsed_b
-    } else {
-        elapsed_b - elapsed_a
-    };
+    let diff = elapsed_a.abs_diff(elapsed_b);
 
     assert!(
         diff < Duration::from_millis(50),

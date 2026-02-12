@@ -187,7 +187,7 @@ mod tests {
         let b64 = russh_keys::PublicKeyBase64::public_key_base64(&pubkey);
         let line = format!("ssh-ed25519 {b64} test-ca@example.com");
 
-        let result = parse_trusted_ca_keys(&vec![line]);
+        let result = parse_trusted_ca_keys(&[line]);
         assert_eq!(result.len(), 1);
         assert_eq!(result[0].key_comment, "test-ca@example.com");
     }

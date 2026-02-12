@@ -71,10 +71,8 @@ impl GeoIpService {
 
     fn lookup_country(&self, ip: &IpAddr) -> Option<String> {
         let reader = self.reader.as_ref()?;
-        let result: maxminddb::geoip2::Country = reader.lookup(*ip).ok()?;
-        result
-            .country
-            .and_then(|c| c.iso_code)
-            .map(|s| s.to_string())
+        let lookup = reader.lookup(*ip).ok()?;
+        let result: maxminddb::geoip2::Country = lookup.decode().ok()??;
+        result.country.iso_code.map(|s| s.to_string())
     }
 }

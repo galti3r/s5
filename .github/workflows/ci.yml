@@ -99,14 +99,14 @@ jobs:
   # Test MSRV: verify compilation with minimum supported Rust version
   # ===========================================================================
   test-msrv:
-    name: Test MSRV (1.75)
+    name: Test MSRV (1.88)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install Rust 1.75
+      - name: Install Rust 1.88
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: "1.75"
+          toolchain: "1.88"
       - name: Cache cargo
         uses: actions/cache@v4
         with:

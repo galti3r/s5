@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 description = "Lightweight SSH server with SOCKS5 proxy, shell emulation, and ACL"
 license = "MIT"
-rust-version = "1.75"
+rust-version = "1.88"
 repository = "https://github.com/galti3r/s5"
 readme = "README.md"
 keywords = ["ssh", "socks5", "proxy", "firewall", "acl"]
@@ -340,7 +340,7 @@ axum = { version = "0.7.9", features = ["ws"] }
 prometheus-client = "0.22.3"
 
 # GeoIP
-maxminddb = "0.24.0"
+maxminddb = "0.27.0"
 
 # HTTP client (webhooks)
 reqwest = { version = "0.12.12", default-features = false, features = ["rustls-tls", "json"] }

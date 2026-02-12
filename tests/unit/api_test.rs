@@ -350,7 +350,7 @@ async fn auth_middleware_bearer_token_accepted() {
 
     let client = reqwest::Client::new();
     let resp = client
-        .get(&format!("http://127.0.0.1:{}/api/status", port))
+        .get(format!("http://127.0.0.1:{}/api/status", port))
         .header("Authorization", format!("Bearer {}", token))
         .send()
         .await
@@ -366,7 +366,7 @@ async fn auth_middleware_wrong_bearer_token_rejected() {
 
     let client = reqwest::Client::new();
     let resp = client
-        .get(&format!("http://127.0.0.1:{}/api/status", port))
+        .get(format!("http://127.0.0.1:{}/api/status", port))
         .header("Authorization", "Bearer wrong-token-value")
         .send()
         .await
@@ -382,7 +382,7 @@ async fn auth_middleware_no_auth_header_rejected() {
 
     let client = reqwest::Client::new();
     let resp = client
-        .get(&format!("http://127.0.0.1:{}/api/status", port))
+        .get(format!("http://127.0.0.1:{}/api/status", port))
         .send()
         .await
         .unwrap();

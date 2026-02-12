@@ -53,7 +53,7 @@ fn sign_user_cert(
 
     builder.serial(1).expect("set serial");
     builder
-        .key_id(&format!("{username}-cert"))
+        .key_id(format!("{username}-cert"))
         .expect("set key_id");
     builder.cert_type(CertType::User).expect("set cert_type");
     builder.valid_principal(username).expect("set principal");
