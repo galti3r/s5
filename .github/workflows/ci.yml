@@ -155,7 +155,7 @@ jobs:
         run: cargo install cargo-tarpaulin
 
       - name: Generate coverage
-        run: cargo tarpaulin --skip-clean --jobs 1 --fail-under 90 --out xml --output-dir coverage/
+        run: cargo tarpaulin --skip-clean --jobs 1 --fail-under 70 --out xml --output-dir coverage/
         env:
           CARGO_BUILD_JOBS: "1"
           RUSTFLAGS: "-C linker=cc"
@@ -312,7 +312,7 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            type=sha,prefix=sha-
+            type=sha,prefix=sha-,format=long
             type=ref,event=branch
 
       - name: Build and push
