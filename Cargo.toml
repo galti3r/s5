@@ -157,6 +157,10 @@ path = "tests/e2e/cli_e2e_test.rs"
 name = "e2e_browser_dashboard"
 path = "tests/e2e/browser_dashboard_test.rs"
 
+[[test]]
+name = "e2e_browser_screenshots"
+path = "tests/e2e/browser_screenshots.rs"
+
 [dependencies]
 # SSH protocol
 russh = "0.46.0"

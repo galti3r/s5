@@ -4,23 +4,66 @@
 
 Lightweight SSH server in Rust serving as a SOCKS5 proxy with shell emulation, multi-user auth, and ACL.
 
-```mermaid
-graph LR
-    Client[SSH Client] -->|ssh -D| S5[s5 Server]
-    Client -->|ssh -L| S5
-    App[SOCKS5 Client] -->|direct| S5
-    S5 -->|SOCKS5| Target1[Target A]
-    S5 -->|TCP Forward| Target2[Target B]
-    S5 -->|Pool + Retry| Target3[Target N]
+<p align="center">
+  <img src="https://raw.githubusercontent.com/galti3r/s5/gh-pages/demo.gif" alt="s5 demo" width="800">
+</p>
 
-    subgraph s5
-        S5 --- Auth[Auth Engine]
-        S5 --- ACL[ACL Filter]
-        S5 --- Shell[Shell Emulator]
-        S5 --- API[REST API]
-        S5 --- Dash[Dashboard]
+```mermaid
+flowchart LR
+    Client["SSH Client<br/><code>ssh -D / -L</code>"]
+    SOCKS["SOCKS5 Client"]
+    Browser["Browser / curl"]
+
+    Client --> SSH
+    SOCKS --> SOCKS5
+    Browser --> REST
+
+    subgraph s5["s5 Server"]
+        direction TB
+        SSH["SSH :2222"]
+        SOCKS5["SOCKS5 :1080"]
+        REST["REST API + Dashboard :8080"]
+
+        subgraph pipeline["Request Pipeline"]
+            direction LR
+            RateLimit["Rate Limit<br/>+ Ban Check"]
+            Auth["Auth Engine<br/>Argon2 / PubKey / TOTP"]
+            ACL["ACL Filter<br/>CIDR · FQDN · GeoIP"]
+            Quota["Quota Guard<br/>BW + Conn Limits"]
+        end
+
+        SSH --> RateLimit
+        SOCKS5 --> RateLimit
+        RateLimit --> Auth
+        Auth --> ACL
+        ACL --> Quota
+
+        Proxy["Proxy Engine<br/>Pool + Retry"]
+        Quota --> Proxy
+
+        Shell["Shell Emulator"]
+        Auth -.->|shell session| Shell
+
+        Metrics["Prometheus Metrics"]
+        Audit["Audit Log + Webhooks"]
+        Proxy -.-> Metrics
+        Proxy -.-> Audit
     end
+
+    Proxy --> T1["Target A"]
+    Proxy --> T2["Target B"]
+    Proxy --> TN["Target N"]
 ```
+
+## Dashboard
+
+| Dark Theme | Light Theme |
+|:---:|:---:|
+| ![Dark](https://raw.githubusercontent.com/galti3r/s5/gh-pages/screenshots/dashboard-dark.png) | ![Light](https://raw.githubusercontent.com/galti3r/s5/gh-pages/screenshots/dashboard-light.png) |
+
+| Quota Usage | Audit Log |
+|:---:|:---:|
+| ![Quotas](https://raw.githubusercontent.com/galti3r/s5/gh-pages/screenshots/dashboard-quotas.png) | ![Audit](https://raw.githubusercontent.com/galti3r/s5/gh-pages/screenshots/dashboard-audit.png) |
 
 ## Feature Highlights
 
