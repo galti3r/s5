@@ -1,13 +1,9 @@
 # s5
 
-[![CI](https://github.com/galti3r/s5/actions/workflows/ci.yml/badge.svg)](https://github.com/galti3r/s5/actions/workflows/ci.yml) [![codecov](https://codecov.io/gh/galti3r/s5/graph/badge.svg)](https://codecov.io/gh/galti3r/s5) [![deps.rs](https://deps.rs/repo/github/galti3r/s5/status.svg)](https://deps.rs/repo/github/galti3r/s5) [![Crates.io](https://img.shields.io/crates/v/s5.svg)](https://crates.io/crates/s5) [![Downloads](https://img.shields.io/crates/d/s5)](https://crates.io/crates/s5) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![CI](https://github.com/galti3r/s5/actions/workflows/ci.yml/badge.svg)](https://github.com/galti3r/s5/actions/workflows/ci.yml) [![codecov](https://codecov.io/gh/galti3r/s5/graph/badge.svg)](https://codecov.io/gh/galti3r/s5) [![deps.rs](https://deps.rs/repo/github/galti3r/s5/status.svg)](https://deps.rs/repo/github/galti3r/s5) [![Crates.io](https://img.shields.io/crates/v/s5.svg)](https://crates.io/crates/s5) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![docs.rs](https://img.shields.io/docsrs/s5)](https://docs.rs/s5) [![Docker](https://img.shields.io/docker/v/dockerhubgalti3r/s5?label=docker)](https://hub.docker.com/r/dockerhubgalti3r/s5) [![Homebrew](https://img.shields.io/badge/homebrew-s5-FBB040?logo=homebrew)](https://github.com/galti3r/homebrew-s5) [![Release](https://img.shields.io/github/v/release/galti3r/s5)](https://github.com/galti3r/s5/releases/latest) [![MSRV](https://img.shields.io/badge/MSRV-1.88-orange.svg)](https://blog.rust-lang.org/)
 
 Lightweight SSH server in Rust serving as a SOCKS5 proxy with shell emulation, multi-user auth, and ACL.
-
-<p align="center">
-  <img src="https://raw.githubusercontent.com/galti3r/s5/gh-pages/demo.gif" alt="s5 demo" width="800">
-</p>
 
 ```mermaid
 flowchart LR
@@ -55,16 +51,6 @@ flowchart LR
     Proxy --> T2["Target B"]
     Proxy --> TN["Target N"]
 ```
-
-## Dashboard
-
-| Dark Theme | Light Theme |
-|:---:|:---:|
-| ![Dark](https://raw.githubusercontent.com/galti3r/s5/gh-pages/screenshots/dashboard-dark.png) | ![Light](https://raw.githubusercontent.com/galti3r/s5/gh-pages/screenshots/dashboard-light.png) |
-
-| Quota Usage | Audit Log |
-|:---:|:---:|
-| ![Quotas](https://raw.githubusercontent.com/galti3r/s5/gh-pages/screenshots/dashboard-quotas.png) | ![Audit](https://raw.githubusercontent.com/galti3r/s5/gh-pages/screenshots/dashboard-audit.png) |
 
 ## Feature Highlights
 
