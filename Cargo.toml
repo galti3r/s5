@@ -296,8 +296,3 @@ lto = true
 codegen-units = 1
 strip = true
 panic = "abort"
-
-# Benchmarks: disable LTO for faster compilation (~10x speedup)
-[profile.bench]
-lto = false
-codegen-units = 16
