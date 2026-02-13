@@ -1,112 +1,87 @@
-# s5 - SSH + SOCKS5 Proxy Server
+# s5
 
-[![CI](https://github.com/galti3r/s5/actions/workflows/ci.yml/badge.svg)](https://github.com/galti3r/s5/actions/workflows/ci.yml)
+[![CI](https://github.com/galti3r/s5/actions/workflows/ci.yml/badge.svg)](https://github.com/galti3r/s5/actions/workflows/ci.yml) [![Benchmark](https://github.com/galti3r/s5/actions/workflows/benchmark.yml/badge.svg)](https://github.com/galti3r/s5/actions/workflows/benchmark.yml) [![codecov](https://codecov.io/gh/galti3r/s5/graph/badge.svg)](https://codecov.io/gh/galti3r/s5) [![Crates.io](https://img.shields.io/crates/v/s5.svg)](https://crates.io/crates/s5) [![Docker](https://img.shields.io/docker/v/dockerhubgalti3r/s5?label=docker)](https://hub.docker.com/r/dockerhubgalti3r/s5) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![MSRV](https://img.shields.io/badge/MSRV-1.88-orange.svg)](https://blog.rust-lang.org/)
 
 Lightweight SSH server in Rust serving as a SOCKS5 proxy with shell emulation, multi-user auth, and ACL.
 
-## Features
+```mermaid
+graph LR
+    Client[SSH Client] -->|ssh -D| S5[s5 Server]
+    Client -->|ssh -L| S5
+    App[SOCKS5 Client] -->|direct| S5
+    S5 -->|SOCKS5| Target1[Target A]
+    S5 -->|TCP Forward| Target2[Target B]
+    S5 -->|Pool + Retry| Target3[Target N]
 
-### Core
-- **SSH Server**: Password, public key, and certificate authentication
-- **Dynamic forwarding** (`ssh -D`): SOCKS5 proxy via SSH
-- **Local port forwarding** (`ssh -L`): TCP forwarding via SSH
-- **Standalone SOCKS5**: Dedicated SOCKS5 listener with username/password auth
-- **TLS SOCKS5**: Optional TLS encryption on standalone SOCKS5 listener
-- **Shell emulation**: Virtual filesystem, basic commands (ls, cd, cat, whoami, etc.)
-- **Container-ready**: Podman/Docker support with multi-stage builds
+    subgraph s5
+        S5 --- Auth[Auth Engine]
+        S5 --- ACL[ACL Filter]
+        S5 --- Shell[Shell Emulator]
+        S5 --- API[REST API]
+        S5 --- Dash[Dashboard]
+    end
+```
 
-### Authentication & Authorization
-- **Argon2id passwords**: Secure password hashing
-- **SSH public keys**: Ed25519, RSA key-based auth
-- **SSH certificates**: Trusted CA-based certificate auth
-- **TOTP 2FA**: Google Authenticator / Authy compatible
-- **Auth method chaining**: Require multiple auth methods (e.g. pubkey + password)
-- **Per-user ACL**: Allow/deny rules for destination hosts/ports (CIDR, wildcards)
-- **Global ACL**: Server-wide rules inherited by all users
-- **User groups**: Hierarchical config inheritance (global -> group -> user)
-- **User roles**: `user` (default) and `admin` roles with different permissions
+## Feature Highlights
 
-### Security
-- **Auto-ban**: Fail2ban-style IP banning after auth failures
-- **IP reputation scoring**: Dynamic scoring with exponential decay
-- **IP whitelist**: Global and per-user source IP restrictions
-- **GeoIP filtering**: Country-based allow/deny with MaxMind GeoLite2
-- **Anti-SSRF guard**: Blocks RFC 1918, link-local, loopback, multicast
-- **Pre-auth rate limiting**: Per-IP connection rate limit
-- **SOCKS5 password zeroization**: Secure memory handling
-- **SFTP/SCP/reverse forwarding blocked**: Prevents unintended access
+| Category | Features |
+|----------|----------|
+| :satellite: SSH & Proxy | SSH dynamic forwarding (`-D`), local forwarding (`-L`), standalone SOCKS5, TLS SOCKS5, connection pooling, smart retry with exponential backoff |
+| :lock: Authentication | Argon2id passwords, SSH public keys, SSH certificates, TOTP 2FA, auth method chaining |
+| :shield: Access Control | Per-user and global ACL, CIDR/FQDN wildcards, GeoIP country filtering, anti-SSRF guard, time-based access windows, account expiration |
+| :no_entry: Security | Auto-ban (fail2ban-style), IP reputation scoring, pre-auth rate limiting, SFTP/SCP blocked, password zeroization, webhook SSRF protection |
+| :computer: Shell | Virtual filesystem, `show` commands (status, bandwidth, connections, ACL, fingerprint, history), `test`/`ping`/`resolve`, bookmarks, aliases, tab completion, MOTD |
+| :bar_chart: Observability | Prometheus metrics, structured audit logs, webhooks with HMAC, alerting rules, real-time web dashboard with SSE |
+| :wrench: Management | REST API, hot config reload, maintenance mode/windows, user groups and roles, quotas (bandwidth + connections), broadcast/kick |
 
-### User Management
-- **User groups**: Shared config for bandwidth, ACL, quotas, permissions
-- **Quotas**: Daily/monthly/hourly bandwidth and connection limits with runtime enforcement
-- **Time-based access**: Restrict login hours and days (per timezone)
-- **Account expiration**: ISO 8601 timestamp, auto-deny after expiry
-- **Bandwidth throttling**: Per-connection and per-user aggregate caps
-- **Idle warning**: Notify users before idle timeout disconnect
-- **Shell permissions**: Fine-grained control over shell commands per user/group
+## Install
 
-### Shell
-- **MOTD (Message of the Day)**: Template engine with 13 variables, ANSI colors
-- **Extended commands**: `show status`, `show connections`, `show bandwidth`, `show acl`, `show fingerprint`, `show history`
-- **Network tools**: `test host:port`, `ping host`, `resolve hostname`
-- **Bookmarks**: Save/list/delete host:port bookmarks
-- **Aliases**: Create command shortcuts (persistent per-user config)
-- **Command history**: Arrow up/down to recall previous commands (in-session)
-- **Left/right arrows**: Cursor movement within the command line
-- **Tab completion**: Autocomplete for commands and arguments
-- **ANSI colors**: Configurable per-user/group color support
+### Cargo
 
-### Networking
-- **Connection pooling**: LIFO per-host TCP pool with idle timeout
-- **Smart retry**: Exponential backoff on connection failures (capped at 10s)
-- **DNS cache**: Configurable TTL (native, custom, or disabled)
-- **Upstream proxy**: Global or per-user SOCKS5 upstream proxy
-- **PROXY protocol**: HAProxy v1/v2 support
+```bash
+cargo install s5
+```
 
-### Observability
-- **Prometheus metrics**: `/metrics` endpoint with cardinality protection (includes quota usage metrics)
-- **Structured audit logging**: JSON audit log with rotation
-- **Connection flow logs**: Detailed per-step timing logs
-- **Webhooks**: HTTP webhooks with retry and HMAC signatures
-- **Alerting**: Rules on bandwidth, connections, and auth failures
-- **Real-time dashboard**: Web UI with SSE live updates, quota usage panel, per-user bandwidth/connection tracking
+### Docker
 
-### Management
-- **REST API**: Bearer token auth, user/connection/ban management
-- **Broadcast messages**: Send messages to all connected users
-- **Kick users**: Disconnect specific users via API
-- **Hot reload**: Reload config without restart
-- **Maintenance mode**: Toggle maintenance with custom message
-- **Maintenance windows**: Scheduled maintenance with cron-like syntax
-- **SSH config generator**: API endpoint for `.ssh/config` snippets
-- **SSE ticket auth**: HMAC-based short-lived tickets for browser SSE
+```bash
+docker pull ghcr.io/galti3r/s5:latest
+docker run -p 2222:2222 ghcr.io/galti3r/s5:latest quick-start --password demo
+```
+
+### Homebrew (macOS/Linux)
+
+```bash
+brew tap galti3r/s5
+brew install s5
+```
 
 ## Quick Start
 
-### Fastest way (zero config)
+### Zero config
 
 ```bash
 # Auto-generated password
-cargo run -- quick-start
+s5 quick-start
 
 # With a chosen password
-cargo run -- quick-start --password demo
+s5 quick-start --password demo
 
-# With SOCKS5 standalone listener
-cargo run -- quick-start --password demo --socks5-listen 0.0.0.0:1080
+# With standalone SOCKS5 listener
+s5 quick-start --password demo --socks5-listen 0.0.0.0:1080
 
-# Save the generated config for later use
-cargo run -- quick-start --password demo --save-config config.toml
+# Save generated config for later
+s5 quick-start --password demo --save-config config.toml
 ```
 
 ### Generate a config file
 
 ```bash
 # Interactive (prompts for password)
-cargo run -- init
+s5 init
 
 # Non-interactive
-cargo run -- init --username alice --password secret --output config.toml
+s5 init --username alice --password secret --output config.toml
 ```
 
 ### Manual setup
@@ -114,8 +89,7 @@ cargo run -- init --username alice --password secret --output config.toml
 ```bash
 make build
 cp config.example.toml config.toml
-# Generate a password hash
-cargo run -- hash-password --password "your-password"
+s5 hash-password --password "your-password"
 # Edit config.toml with the generated hash
 make run
 ```
@@ -207,7 +181,8 @@ Available variables: `{user}`, `{auth_method}`, `{source_ip}`, `{connections}`, 
 
 Per-user/group MOTD overrides the global one.
 
-### Shell commands
+<details>
+<summary><strong>Shell commands</strong></summary>
 
 | Command | Description | Permission |
 |---------|-------------|------------|
@@ -229,6 +204,8 @@ Per-user/group MOTD overrides the global one.
 
 Permissions are configured via `shell_permissions` at user, group, or global level.
 
+</details>
+
 ### Quotas, rate limiting, and time-based access
 
 ```toml
@@ -237,7 +214,7 @@ username = "contractor"
 password_hash = "$argon2id$..."
 group = "external"
 expires_at = "2026-06-30T23:59:59Z"
-max_connections = 5                   # Max concurrent connections
+max_connections = 5
 
 [users.rate_limits]
 connections_per_second = 2
@@ -259,8 +236,8 @@ Server-level rate limiting in `[limits]`:
 
 ```toml
 [limits]
-max_bandwidth_mbps = 100              # Server-wide bandwidth cap
-max_new_connections_per_second = 50   # Server-level rate limit
+max_bandwidth_mbps = 100
+max_new_connections_per_second = 50
 max_new_connections_per_minute = 500
 ```
 
@@ -298,7 +275,8 @@ connect_retry = 3            # retry 3 times on failure
 connect_retry_delay_ms = 500 # initial delay 500ms, doubles each retry, max 10s
 ```
 
-## Environment Variables
+<details>
+<summary><strong>Environment variables</strong></summary>
 
 s5 supports full configuration via environment variables for Docker/Kubernetes deployments. See `docker-compose.yml` for complete examples.
 
@@ -338,6 +316,33 @@ s5 supports full configuration via environment variables for Docker/Kubernetes d
 | `S5_API_TOKEN` | Yes |
 | `S5_TOTP_SECRET` / `S5_USER_<N>_TOTP_SECRET` | Yes |
 
+</details>
+
+## API
+
+The HTTP API is protected by Bearer token (configured in `api.token`).
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/health` | Health check (no auth) |
+| GET | `/api/status` | Server status (uptime, connections, users) |
+| GET | `/api/users` | List users (no password hashes) |
+| GET | `/api/users?details=true` | Extended user info with connection stats |
+| GET | `/api/connections` | Active connections per user |
+| GET | `/api/bans` | Banned IPs |
+| DELETE | `/api/bans/:ip` | Unban an IP |
+| POST | `/api/maintenance` | Toggle maintenance mode |
+| POST | `/api/reload` | Hot-reload config from disk |
+| POST | `/api/sse-ticket` | Generate short-lived HMAC ticket for SSE auth |
+| POST | `/api/kick/:username` | Disconnect all sessions for a user |
+| POST | `/api/broadcast` | Broadcast message to all connected users |
+| GET | `/api/quotas` | List all users' quota usage |
+| GET | `/api/quotas/:username` | Quota usage detail for a specific user |
+| POST | `/api/quotas/:username/reset` | Reset quota counters for a user |
+| GET | `/api/ssh-config` | Generate SSH config snippet (`?user=&host=`) |
+| GET | `/api/events` | SSE stream (token via `?token=` or `?ticket=`) |
+| GET | `/dashboard` | Web dashboard (no auth required) |
+
 ## Health Check
 
 ```bash
@@ -366,29 +371,29 @@ make docker-run
 make compose-up
 ```
 
-### Multi-Architecture Builds
+### Multi-architecture builds
 
 Build for both `linux/amd64` and `linux/arm64` (Apple Silicon, AWS Graviton, etc.).
 
-#### Cross-compilation (fast, recommended)
+**Cross-compilation (fast, recommended):**
 
 ```bash
 make docker-build-cross
 ```
 
-#### QEMU emulation (slower, simpler)
+**QEMU emulation (slower, simpler):**
 
 ```bash
 make docker-build-multiarch
 ```
 
-#### Push to registry
+**Push to registry:**
 
 ```bash
 PUSH=true IMAGE_NAME=ghcr.io/user/s5 IMAGE_TAG=v1.0.0 make docker-build-cross
 ```
 
-#### CI/CD
+### CI/CD
 
 Multi-arch images are automatically built and pushed to GHCR on tag pushes via CI.
 
@@ -410,79 +415,45 @@ All pipelines include:
 ## Testing
 
 ```bash
-# All tests (unit + E2E)
-make test
-
-# Unit tests only
-make test-unit
-
-# E2E tests only
-make test-e2e
-
-# E2E tests including ignored (IPv6, perf)
-make test-e2e-all
-
-# Performance benchmarks (throughput, latency, concurrency)
-make test-perf
-
-# Security scan (clippy + cargo-audit + cargo-deny)
-make security-scan
-
-# Full suite (tests + security)
-make test-all
-
-# E2E in Podman containers (isolated network)
-make test-e2e-podman
+make test              # All tests (unit + E2E)
+make test-unit         # Unit tests only
+make test-e2e          # E2E tests only
+make test-e2e-all      # E2E including ignored (IPv6, perf)
+make test-e2e-browser  # Browser E2E (Chrome Headless in Podman)
+make test-perf         # Performance benchmarks (throughput, latency, concurrency)
+make security-scan     # Security scan (clippy + cargo-audit + cargo-deny)
+make test-all          # Full suite (tests + security)
+make test-e2e-podman   # E2E in Podman containers (isolated network)
+make bench             # Criterion benchmarks (ACL, password, config, SOCKS5)
 ```
 
 ### Test coverage
 
 | Category | Tests | Description |
 |----------|------:|-------------|
-| Unit (lib) | 93 | Config, ACL, auth, shell, SOCKS5 protocol, proxy, security, show commands, session |
-| Unit (standalone) | 202 | Auth service, CLI, config validation, connectors, geoip, webhooks, pre-auth, source IP, audit, protocol fuzz, SSH keys, pubkey, DNS cache, metrics, SSE ticket, IP rate limiter, SOCKS5 TLS, webhook retry, API users, SOCKS5 timeout, proxy details |
-| Unit (new features) | 48 | Connection pool, smart retry, shell commands, IP reputation, MOTD, time access, alerting, groups, roles |
-| Unit (quota) | 22 | QuotaTracker, rolling windows, rate limiting, throttle, daily/monthly quotas, reset, cleanup |
+| Unit (lib) | 387 | Config, ACL, auth, shell, SOCKS5 protocol, proxy, security, show commands, session, alerting, quotas, groups, roles, connection pool, MOTD, IP reputation |
+| Unit (standalone) | 941 | Auth service, CLI, config validation, connectors, geoip, webhooks, pre-auth, source IP, audit, protocol fuzz, SSH keys, pubkey, DNS cache, metrics, SSE ticket, IP rate limiter, SOCKS5 TLS, webhook retry, API users, SOCKS5 timeout, proxy details, smart retry, time access |
 | E2E - Auth | 5 | Password success/failure, unknown user, shell prompt, retry |
-| E2E - Shell | 16 | exec commands, dangerous commands blocked, interactive shell |
+| E2E - Shell | 16 | Exec commands, dangerous commands blocked, interactive shell |
 | E2E - Shell commands | 18 | show status/bandwidth/connections, help, echo, alias, unknown commands |
 | E2E - ACL | 12 | FQDN, subnet/CIDR, combined rules, wildcard, IPv6 |
 | E2E - Forwarding | 3 | Local forward, large data, denied user |
 | E2E - Rejection | 8 | SFTP, reverse forward, bash/sh/nc/rsync blocked |
-| E2E - SOCKS5 | 11 | Auth, forwarding, concurrency, anti-SSRF, standalone |
-| E2E - API | 12 | Health, users, connections, bans, maintenance, auth, dashboard, SSE |
+| E2E - SOCKS5 | 18 | Auth, forwarding, concurrency, anti-SSRF, standalone, timeout |
+| E2E - API | 39 | Health, users, connections, bans, maintenance, auth, dashboard, SSE, groups, sessions, audit |
 | E2E - Quota API | 10 | List quotas, user detail, reset, auth, enforcement, rate limiting, Prometheus metrics |
 | E2E - Reload | 3 | Valid/invalid config reload, auth required |
 | E2E - Status | 3 | Health, Prometheus metrics, maintenance mode |
 | E2E - Autoban | 3 | Trigger after threshold, reject banned IP, no false positive |
 | E2E - Audit | 2 | Auth success/failure audit events |
+| E2E - Webhooks | 11 | Webhook delivery, retry logic, HMAC signatures |
 | E2E - Performance | 5 | Throughput, latency, concurrent connections |
-| **Total** | **~738** | |
-
-## API
-
-The HTTP API is protected by Bearer token (configured in `api.token`).
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/health` | Health check (no auth) |
-| GET | `/api/status` | Server status (uptime, connections, users) |
-| GET | `/api/users` | List users (no password hashes) |
-| GET | `/api/users?details=true` | Extended user info with connection stats |
-| GET | `/api/connections` | Active connections per user |
-| GET | `/api/bans` | Banned IPs |
-| DELETE | `/api/bans/:ip` | Unban an IP |
-| POST | `/api/maintenance` | Toggle maintenance mode |
-| POST | `/api/reload` | Hot-reload config from disk |
-| POST | `/api/sse-ticket` | Generate short-lived HMAC ticket for SSE auth |
-| POST | `/api/kick/:username` | Disconnect all sessions for a user |
-| POST | `/api/broadcast` | Broadcast message to all connected users |
-| GET | `/api/quotas` | List all users' quota usage |
-| GET | `/api/quotas/:username` | Quota usage detail for a specific user |
-| POST | `/api/quotas/:username/reset` | Reset quota counters for a user |
-| GET | `/api/ssh-config` | Generate SSH config snippet (`?user=&host=`) |
-| GET | `/api/events` | SSE stream (token via `?token=` or `?ticket=`) |
-| GET | `/dashboard` | Web dashboard (no auth required) |
+| E2E - SSH sessions | 3 | Session tracking and management |
+| E2E - SSE/WS | 12 | SSE ticket auth, SSE payloads, WebSocket connections |
+| E2E - Backup/Restore | 6 | Config backup and restore via API |
+| E2E - CLI | 10 | CLI subcommands, completions, help output |
+| E2E - Browser | 9 | Dashboard E2E with Chrome Headless (Podman) |
+| **Total** | **~940+** | **1517 test functions across all binaries** |
 
 ## Security
 
