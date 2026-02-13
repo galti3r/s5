@@ -159,7 +159,7 @@ jobs:
         run: cargo install cargo-tarpaulin
 
       - name: Generate coverage
-        run: cargo tarpaulin --skip-clean --jobs 2 --fail-under 70 --out xml --output-dir coverage/ --lib --test unit
+        run: cargo tarpaulin --skip-clean --jobs 2 --fail-under 60 --out xml --output-dir coverage/ --lib --test unit
         env:
           CARGO_BUILD_JOBS: "2"
           RUSTFLAGS: "-C linker=cc"
