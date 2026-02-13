@@ -15,134 +15,16 @@ exclude = [".github/", ".forgejo/", ".gitlab-ci.yml", "scripts/", "tests/", "con
 name = "s5"
 path = "src/main.rs"
 
+# ---------------------------------------------------------------------------
+# Unit tests — consolidated into a single binary for faster compilation
+# ---------------------------------------------------------------------------
 [[test]]
-name = "unit_config"
-path = "tests/unit/config_test.rs"
+name = "unit"
+path = "tests/unit/main.rs"
 
-[[test]]
-name = "unit_acl"
-path = "tests/unit/acl_test.rs"
-
-[[test]]
-name = "unit_password"
-path = "tests/unit/password_test.rs"
-
-[[test]]
-name = "unit_shell_parser"
-path = "tests/unit/shell_parser_test.rs"
-
-[[test]]
-name = "unit_shell_commands"
-path = "tests/unit/shell_commands_test.rs"
-
-[[test]]
-name = "unit_socks_auth"
-path = "tests/unit/socks_auth_test.rs"
-
-[[test]]
-name = "unit_socks_protocol"
-path = "tests/unit/socks_protocol_test.rs"
-
-[[test]]
-name = "unit_socks_protocol_async"
-path = "tests/unit/socks_protocol_async_test.rs"
-
-[[test]]
-name = "unit_proxy_engine"
-path = "tests/unit/proxy_engine_test.rs"
-
-[[test]]
-name = "unit_security"
-path = "tests/unit/security_test.rs"
-
-[[test]]
-name = "unit_audit"
-path = "tests/unit/audit_test.rs"
-
-[[test]]
-name = "unit_auth_service"
-path = "tests/unit/auth_service_test.rs"
-
-[[test]]
-name = "unit_ssh_keys"
-path = "tests/unit/ssh_keys_test.rs"
-
-[[test]]
-name = "unit_pubkey"
-path = "tests/unit/pubkey_test.rs"
-
-[[test]]
-name = "unit_forwarder"
-path = "tests/unit/forwarder_test.rs"
-
-[[test]]
-name = "unit_api"
-path = "tests/unit/api_test.rs"
-
-[[test]]
-name = "unit_connector"
-path = "tests/unit/connector_test.rs"
-
-[[test]]
-name = "unit_geoip"
-path = "tests/unit/geoip_test.rs"
-
-[[test]]
-name = "unit_webhook"
-path = "tests/unit/webhook_test.rs"
-
-[[test]]
-name = "unit_cli"
-path = "tests/unit/cli_test.rs"
-
-[[test]]
-name = "unit_socks_handler"
-path = "tests/unit/socks_handler_test.rs"
-
-[[test]]
-name = "unit_context"
-path = "tests/unit/context_test.rs"
-
-[[test]]
-name = "unit_config_validation"
-path = "tests/unit/config_validation_test.rs"
-
-[[test]]
-name = "unit_pre_auth_check"
-path = "tests/unit/pre_auth_check_test.rs"
-
-[[test]]
-name = "unit_user_source_ip"
-path = "tests/unit/user_source_ip_test.rs"
-
-[[test]]
-name = "unit_audit_dropped"
-path = "tests/unit/audit_dropped_test.rs"
-
-[[test]]
-name = "unit_socks_protocol_fuzz"
-path = "tests/unit/socks_protocol_fuzz_test.rs"
-
-[[test]]
-name = "unit_dns_cache"
-path = "tests/unit/dns_cache_test.rs"
-
-[[test]]
-name = "unit_socks_reply_codes"
-path = "tests/unit/socks_reply_codes_test.rs"
-
-[[test]]
-name = "unit_sse_ticket"
-path = "tests/unit/sse_ticket_test.rs"
-
-[[test]]
-name = "unit_ip_rate_limiter"
-path = "tests/unit/ip_rate_limiter_test.rs"
-
-[[test]]
-name = "unit_metrics_cardinality"
-path = "tests/unit/metrics_cardinality_test.rs"
-
+# ---------------------------------------------------------------------------
+# E2E tests — each runs its own server instance, must be separate binaries
+# ---------------------------------------------------------------------------
 [[test]]
 name = "e2e_reload"
 path = "tests/e2e/reload_test.rs"
@@ -228,16 +110,8 @@ name = "e2e_api_users_details"
 path = "tests/e2e/api_users_details_test.rs"
 
 [[test]]
-name = "unit_proxy_connection_details"
-path = "tests/unit/proxy_connection_details_test.rs"
-
-[[test]]
 name = "e2e_socks5_timeout"
 path = "tests/e2e/socks5_timeout_test.rs"
-
-[[test]]
-name = "unit_socks5_tls_config"
-path = "tests/unit/socks5_tls_config_test.rs"
 
 [[test]]
 name = "e2e_sse_ticket"
@@ -248,20 +122,8 @@ name = "e2e_shell_commands"
 path = "tests/e2e/shell_commands_test.rs"
 
 [[test]]
-name = "unit_new_features"
-path = "tests/unit/new_features_test.rs"
-
-[[test]]
-name = "unit_quota"
-path = "tests/unit/quota_test.rs"
-
-[[test]]
 name = "e2e_quota_api"
 path = "tests/e2e/quota_api_test.rs"
-
-[[test]]
-name = "unit_audit_improvements"
-path = "tests/unit/audit_improvements_test.rs"
 
 [[test]]
 name = "e2e_api_audit_improvements"
@@ -290,6 +152,10 @@ path = "tests/e2e/backup_restore_test.rs"
 [[test]]
 name = "e2e_cli"
 path = "tests/e2e/cli_e2e_test.rs"
+
+[[test]]
+name = "e2e_browser_dashboard"
+path = "tests/e2e/browser_dashboard_test.rs"
 
 [dependencies]
 # SSH protocol
@@ -423,98 +289,6 @@ harness = false
 [[bench]]
 name = "socks5_bench"
 harness = false
-
-[[test]]
-name = "unit_acl_proptest"
-path = "tests/unit/acl_proptest.rs"
-
-[[test]]
-name = "unit_shell_parser_proptest"
-path = "tests/unit/shell_parser_proptest.rs"
-
-[[test]]
-name = "unit_config_proptest"
-path = "tests/unit/config_proptest.rs"
-
-[[test]]
-name = "e2e_browser_dashboard"
-path = "tests/e2e/browser_dashboard_test.rs"
-
-[[test]]
-name = "unit_alerting"
-path = "tests/unit/alerting_test.rs"
-
-[[test]]
-name = "unit_pool"
-path = "tests/unit/pool_test.rs"
-
-[[test]]
-name = "unit_ip_guard"
-path = "tests/unit/ip_guard_test.rs"
-
-[[test]]
-name = "unit_retry"
-path = "tests/unit/retry_test.rs"
-
-[[test]]
-name = "unit_totp_extraction"
-path = "tests/unit/totp_extraction_test.rs"
-
-[[test]]
-name = "unit_rate_limit"
-path = "tests/unit/rate_limit_test.rs"
-
-[[test]]
-name = "unit_audit_logger"
-path = "tests/unit/audit_logger_test.rs"
-
-[[test]]
-name = "unit_geoip_unit"
-path = "tests/unit/geoip_unit_test.rs"
-
-[[test]]
-name = "unit_connector_unit"
-path = "tests/unit/connector_unit_test.rs"
-
-[[test]]
-name = "unit_proxy_engine_unit"
-path = "tests/unit/proxy_engine_unit_test.rs"
-
-[[test]]
-name = "unit_forwarder_unit"
-path = "tests/unit/forwarder_unit_test.rs"
-
-[[test]]
-name = "unit_metrics_unit"
-path = "tests/unit/metrics_unit_test.rs"
-
-[[test]]
-name = "unit_ip_reputation"
-path = "tests/unit/ip_reputation_test.rs"
-
-[[test]]
-name = "unit_ssh_handler"
-path = "tests/unit/ssh_handler_test.rs"
-
-[[test]]
-name = "unit_certificate_auth"
-path = "tests/unit/certificate_auth_test.rs"
-
-[[test]]
-name = "unit_config_merge_edge_cases"
-path = "tests/unit/config_merge_edge_cases_test.rs"
-
-[[test]]
-name = "unit_proxy_acl_decision"
-path = "tests/unit/proxy_acl_decision_test.rs"
-
-[[test]]
-name = "unit_maintenance_window_edge_cases"
-path = "tests/unit/maintenance_window_edge_cases_test.rs"
-
-[[test]]
-name = "unit_server_logic"
-path = "tests/unit/server_logic_test.rs"
 
 [profile.release]
 opt-level = 3

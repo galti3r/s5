@@ -3,8 +3,7 @@
 //! Tests the full AuthService path: config loading, trusted CA parsing,
 //! certificate verification, and the auth_publickey_certificate method.
 
-mod test_support;
-
+use crate::test_support::{default_user_config, full_app_config};
 use s5::auth::certificate::{parse_trusted_ca_keys, verify_certificate};
 use s5::auth::AuthService;
 use s5::config::types::*;
@@ -12,7 +11,6 @@ use ssh_key::certificate::CertType;
 use ssh_key::private::KeypairData;
 use ssh_key::public::KeyData;
 use ssh_key::PrivateKey;
-use test_support::{default_user_config, full_app_config};
 
 /// Helper: generate an Ed25519 CA key pair and return (PrivateKey, openssh_string).
 fn gen_ca_keypair() -> (PrivateKey, String) {

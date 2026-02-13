@@ -1,9 +1,7 @@
-mod test_support;
-
+use crate::test_support::default_server_config;
 use s5::auth::user::User;
 use s5::config::types::{GlobalAclConfig, LimitsConfig, ShellConfig, UserConfig, UserRole};
 use std::collections::HashMap;
-use test_support::default_server_config;
 
 fn user_with_source_ips(ips: &[&str]) -> User {
     let cfg = UserConfig {

@@ -17,7 +17,7 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write
+  contents: read
   pull-requests: write
 
 jobs:
@@ -45,11 +45,21 @@ jobs:
           key: ${{ runner.os }}-cargo-bench-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-bench-
 
+      - name: Restore benchmark history
+        uses: actions/cache@v4
+        with:
+          path: ./cache
+          key: benchmark-data-${{ github.ref_name }}
+          restore-keys: |
+            benchmark-data-main
+            benchmark-data-
+
       - name: Compile benchmarks
         run: cargo bench --bench acl_bench --bench password_bench --bench config_bench --bench socks5_bench --no-run
 
       - name: Run benchmarks
         run: |
+          mkdir -p cache
           cargo bench --bench acl_bench --bench password_bench --bench config_bench --bench socks5_bench \
             -- --output-format bencher 2>&1 | grep '^test ' | tee bench-output.txt
 
@@ -59,16 +69,15 @@ jobs:
           name: s5 Criterion Benchmarks
           tool: cargo
           output-file-path: bench-output.txt
-          # Push results to gh-pages only on main
-          auto-push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-          gh-pages-branch: gh-pages
-          benchmark-data-dir-path: dev/bench
+          auto-push: false
+          external-data-json-path: ./cache/benchmark-data.json
           # Comment on PRs with comparison
           comment-on-alert: true
           comment-always: ${{ github.event_name == 'pull_request' }}
           # Alert if regression exceeds 10%
           alert-threshold: "110%"
-          # Don't fail on first run (no baseline yet)
+          # Fail PR if regression detected
           fail-on-alert: ${{ github.event_name == 'pull_request' }}
           alert-comment-cc-users: "@${{ github.repository_owner }}"
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          summary-always: true

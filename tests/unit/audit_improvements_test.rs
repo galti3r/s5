@@ -4,11 +4,9 @@
 //! - Phase 6.3: UserStore uses Arc<User>
 //! - Phase 4.1: Metrics prune_known_users
 
-mod test_support;
-
+use crate::test_support::{default_server_config, default_user_config};
 use s5::config::types::GlobalAclConfig;
 use std::sync::Arc;
-use test_support::{default_server_config, default_user_config};
 
 // ---------------------------------------------------------------------------
 // 1.2: Webhook client has redirect Policy::none()

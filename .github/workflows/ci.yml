@@ -159,15 +159,7 @@ jobs:
         run: cargo install cargo-tarpaulin
 
       - name: Generate coverage
-        run: |
-          # Build test target list excluding E2E tests (they use subprocesses that break ptrace)
-          TARGETS="--lib"
-          for t in $(cargo metadata --no-deps --format-version=1 | \
-            jq -r '.packages[0].targets[] | select(.kind[] == "test") | .name' | \
-            grep -v '^e2e_'); do
-            TARGETS="$TARGETS --test $t"
-          done
-          cargo tarpaulin --skip-clean --jobs 2 --fail-under 70 --out xml --output-dir coverage/ $TARGETS
+        run: cargo tarpaulin --skip-clean --jobs 2 --fail-under 70 --out xml --output-dir coverage/ --lib --test unit
         env:
           CARGO_BUILD_JOBS: "2"
           RUSTFLAGS: "-C linker=cc"
@@ -320,7 +312,7 @@ jobs:
         with:
           images: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-            dockerhubgalti3r/s5
+            docker.io/galti3r/s5
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
