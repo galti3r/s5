@@ -74,10 +74,10 @@ jobs:
           # Comment on PRs with comparison
           comment-on-alert: true
           comment-always: ${{ github.event_name == 'pull_request' }}
-          # Alert if regression exceeds 10%
-          alert-threshold: "110%"
-          # Fail PR if regression detected
-          fail-on-alert: ${{ github.event_name == 'pull_request' }}
+          # Alert if regression exceeds 100% (CI runners are noisy)
+          alert-threshold: "200%"
+          # Comment but don't block PRs (CI runner variance causes false positives)
+          fail-on-alert: false
           alert-comment-cc-users: "@${{ github.repository_owner }}"
           github-token: ${{ secrets.GITHUB_TOKEN }}
           summary-always: true

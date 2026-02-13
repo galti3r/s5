@@ -424,7 +424,7 @@ jobs:
           sudo install /tmp/ttyd /usr/local/bin/ttyd
           VHS_VERSION=$(curl -fsSL https://api.github.com/repos/charmbracelet/vhs/releases/latest | grep -oP '"tag_name":\s*"v\K[^"]+')
           curl -fsSL "https://github.com/charmbracelet/vhs/releases/download/v${VHS_VERSION}/vhs_${VHS_VERSION}_Linux_x86_64.tar.gz" | \
-            sudo tar -xz -C /usr/local/bin vhs
+            sudo tar -xz -C /usr/local/bin --strip-components=1 "vhs_${VHS_VERSION}_Linux_x86_64/vhs"
 
       - name: Start s5 server
         run: |
