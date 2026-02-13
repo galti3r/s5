@@ -1,4 +1,5 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{criterion_group, criterion_main, Criterion};
+use std::hint::black_box;
 use s5::socks::protocol::{TargetAddr, UdpHeader};
 
 fn bench_read_greeting(c: &mut Criterion) {

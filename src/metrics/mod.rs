@@ -37,14 +37,14 @@ pub struct HttpDurationHistogramBuilder;
 impl MetricConstructor<Histogram> for DurationHistogramBuilder {
     fn new_metric(&self) -> Histogram {
         // Buckets: 1s, 5s, 15s, 30s, 60s, 300s, 600s, 1800s, 3600s
-        Histogram::new([1.0, 5.0, 15.0, 30.0, 60.0, 300.0, 600.0, 1800.0, 3600.0].into_iter())
+        Histogram::new([1.0, 5.0, 15.0, 30.0, 60.0, 300.0, 600.0, 1800.0, 3600.0])
     }
 }
 
 impl MetricConstructor<Histogram> for HttpDurationHistogramBuilder {
     fn new_metric(&self) -> Histogram {
         // Buckets: 1ms, 5ms, 10ms, 25ms, 50ms, 100ms, 250ms, 500ms, 1s, 5s
-        Histogram::new([0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 5.0].into_iter())
+        Histogram::new([0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 5.0])
     }
 }
 
@@ -56,12 +56,9 @@ pub struct ConnectionDurationHistogramBuilder;
 impl MetricConstructor<Histogram> for ConnectionDurationHistogramBuilder {
     fn new_metric(&self) -> Histogram {
         // Buckets: 0.1s, 0.5s, 1s, 5s, 10s, 30s, 60s, 300s (5m), 600s (10m), 1800s (30m), 3600s (1h)
-        Histogram::new(
-            [
-                0.1, 0.5, 1.0, 5.0, 10.0, 30.0, 60.0, 300.0, 600.0, 1800.0, 3600.0,
-            ]
-            .into_iter(),
-        )
+        Histogram::new([
+            0.1, 0.5, 1.0, 5.0, 10.0, 30.0, 60.0, 300.0, 600.0, 1800.0, 3600.0,
+        ])
     }
 }
 
