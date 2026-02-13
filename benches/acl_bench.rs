@@ -1,7 +1,7 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use std::hint::black_box;
 use s5::config::acl::{AclRule, ParsedAcl};
 use s5::config::types::AclPolicyConfig;
+use std::hint::black_box;
 
 fn bench_acl_parse_simple(c: &mut Criterion) {
     c.bench_function("acl_parse_simple", |b| {

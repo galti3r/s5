@@ -1,6 +1,6 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use std::hint::black_box;
 use s5::config;
+use std::hint::black_box;
 
 const FAKE_HASH: &str = "argon2id-fakehash-for-testing";
 

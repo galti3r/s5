@@ -1,6 +1,6 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use std::hint::black_box;
 use s5::socks::protocol::{TargetAddr, UdpHeader};
+use std::hint::black_box;
 
 fn bench_read_greeting(c: &mut Criterion) {
     let rt = tokio::runtime::Runtime::new().unwrap();
