@@ -463,6 +463,11 @@ jobs:
             git checkout -b gh-pages
           fi
 
+      - name: Clean old assets
+        run: |
+          rm -rf gh-pages/screenshots
+          rm -f gh-pages/demo.gif
+
       - uses: actions/download-artifact@v4
         with:
           name: dashboard-screenshots
