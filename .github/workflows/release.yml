@@ -34,6 +34,61 @@ jobs:
           echo "Version verified: $CARGO_VERSION == $TAG_VERSION"
 
   # ===========================================================================
+  # Lint: fmt + clippy
+  # ===========================================================================
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache cargo
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-lint-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-lint-
+
+      - name: cargo fmt
+        run: cargo fmt --all -- --check
+
+      - name: cargo clippy
+        run: cargo clippy --all-targets -- -D warnings
+
+  # ===========================================================================
+  # Test: unit + integration
+  # ===========================================================================
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-test-
+
+      - name: Run all tests
+        run: cargo test --all-targets
+
+  # ===========================================================================
   # Security: cargo-audit + cargo-deny
   # ===========================================================================
   security:
@@ -61,7 +116,7 @@ jobs:
   # ===========================================================================
   build:
     name: Build (${{ matrix.target }})
-    needs: [verify-version]
+    needs: [verify-version, lint, test]
     runs-on: ubuntu-latest
     strategy:
       matrix:
