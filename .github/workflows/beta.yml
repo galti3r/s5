@@ -46,7 +46,7 @@ jobs:
         with:
           images: |
             ghcr.io/${{ github.repository }}
-            galti3r/s5
+            dockerhubgalti3r/s5
           tags: |
             type=raw,value=beta
             type=match,pattern=beta-(.*),group=0
