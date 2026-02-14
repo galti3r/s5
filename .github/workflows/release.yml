@@ -1,0 +1,393 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+env:
+  CARGO_TERM_COLOR: always
+
+permissions:
+  contents: write
+  packages: write
+  id-token: write
+  attestations: write
+
+jobs:
+  # ===========================================================================
+  # Verify: tag matches Cargo.toml version
+  # ===========================================================================
+  verify-version:
+    name: Verify version matches tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Verify version matches tag
+        run: |
+          CARGO_VERSION=$(grep '^version' Cargo.toml | head -1 | sed 's/.*= "//;s/"//')
+          TAG_VERSION=${GITHUB_REF#refs/tags/v}
+          if [ "$CARGO_VERSION" != "$TAG_VERSION" ]; then
+            echo "ERROR: Cargo.toml version ($CARGO_VERSION) doesn't match tag ($TAG_VERSION)"
+            exit 1
+          fi
+          echo "Version verified: $CARGO_VERSION == $TAG_VERSION"
+
+  # ===========================================================================
+  # Security: cargo-audit + cargo-deny
+  # ===========================================================================
+  security:
+    name: Security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install security tools
+        run: |
+          cargo install cargo-audit
+          cargo install cargo-deny
+
+      - name: cargo audit
+        run: cargo audit
+
+      - name: cargo deny
+        run: cargo deny check
+
+  # ===========================================================================
+  # Build: cross-compile for all targets
+  # ===========================================================================
+  build:
+    name: Build (${{ matrix.target }})
+    needs: [verify-version]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            archive: s5-x86_64-linux-gnu.tar.gz
+          - target: x86_64-unknown-linux-musl
+            archive: s5-x86_64-linux-musl.tar.gz
+          - target: aarch64-unknown-linux-gnu
+            archive: s5-aarch64-linux-gnu.tar.gz
+          - target: aarch64-unknown-linux-musl
+            archive: s5-aarch64-linux-musl.tar.gz
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cross
+        run: cargo install cross
+
+      - name: Build
+        run: cross build --release --target ${{ matrix.target }}
+
+      - name: Strip binary
+        run: |
+          if command -v strip &> /dev/null; then
+            strip target/${{ matrix.target }}/release/s5 2>/dev/null || true
+          fi
+
+      - name: Package
+        run: |
+          mkdir -p dist
+          cp target/${{ matrix.target }}/release/s5 dist/
+          cp README.md LICENSE dist/ 2>/dev/null || true
+          cd dist && tar czf ../${{ matrix.archive }} *
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.archive }}
+          path: ${{ matrix.archive }}
+
+  extras:
+    name: Generate extras
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build
+        run: cargo build --release
+
+      - name: Generate completions
+        run: |
+          mkdir -p completions
+          target/release/s5 completions bash > completions/s5.bash
+          target/release/s5 completions zsh > completions/_s5
+          target/release/s5 completions fish > completions/s5.fish
+
+      - name: Generate man page
+        run: |
+          mkdir -p man
+          target/release/s5 manpage > man/s5.1
+
+      - name: Upload completions
+        uses: actions/upload-artifact@v4
+        with:
+          name: completions
+          path: completions/
+
+      - name: Upload man page
+        uses: actions/upload-artifact@v4
+        with:
+          name: manpage
+          path: man/
+
+  # ===========================================================================
+  # SBOM: generate CycloneDX Software Bill of Materials
+  # ===========================================================================
+  sbom:
+    name: Generate SBOM
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-cyclonedx
+        run: cargo install cargo-cyclonedx
+
+      - name: Generate CycloneDX SBOM (JSON)
+        run: cargo cyclonedx --format json --output-cdx
+
+      - name: Rename SBOM for release
+        run: |
+          # cargo-cyclonedx outputs to bom.json or <crate>.cdx.json
+          # Find the generated file and rename for the release
+          SBOM_FILE=$(find . -maxdepth 2 -name '*.cdx.json' -o -name 'bom.json' | head -1)
+          if [ -z "$SBOM_FILE" ]; then
+            echo "ERROR: SBOM file not found"
+            ls -la *.json 2>/dev/null || true
+            exit 1
+          fi
+          cp "$SBOM_FILE" s5.cdx.json
+          echo "SBOM generated: s5.cdx.json"
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: s5.cdx.json
+
+  # ===========================================================================
+  # Release: checksums, cosign signing, GitHub Release
+  # ---------------------------------------------------------------------------
+  # Verification (after downloading a binary and its .sig / .pem):
+  #
+  #   cosign verify-blob \
+  #     --certificate <binary>.pem \
+  #     --signature <binary>.sig \
+  #     --certificate-identity-regexp '.*' \
+  #     --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  #     <binary>
+  #
+  # SHA256SUMS and the SBOM (s5.cdx.json) are also signed:
+  #
+  #   cosign verify-blob \
+  #     --certificate SHA256SUMS.pem \
+  #     --signature SHA256SUMS.sig \
+  #     --certificate-identity-regexp '.*' \
+  #     --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  #     SHA256SUMS
+  #
+  # SLSA provenance can be verified with gh CLI:
+  #
+  #   gh attestation verify <binary> -R ${{ github.repository }}
+  # ===========================================================================
+  release:
+    name: GitHub Release
+    needs: [build, extras, sbom, security]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v7
+        with:
+          path: artifacts/
+
+      - name: Generate checksums
+        run: |
+          cd artifacts
+          find . -name '*.tar.gz' -exec cp {} . \;
+          cp sbom/s5.cdx.json . 2>/dev/null || true
+          sha256sum *.tar.gz s5.cdx.json > SHA256SUMS
+          echo "Generated SHA256SUMS:"
+          cat SHA256SUMS
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+
+      - name: Sign release artifacts with cosign (keyless / OIDC)
+        run: |
+          cd artifacts
+
+          # Sign each binary archive
+          for archive in *.tar.gz; do
+            echo "Signing $archive ..."
+            cosign sign-blob --yes \
+              --output-signature "${archive}.sig" \
+              --output-certificate "${archive}.pem" \
+              "$archive"
+          done
+
+          # Sign the SHA256SUMS file
+          echo "Signing SHA256SUMS ..."
+          cosign sign-blob --yes \
+            --output-signature SHA256SUMS.sig \
+            --output-certificate SHA256SUMS.pem \
+            SHA256SUMS
+
+          # Sign the SBOM
+          if [ -f s5.cdx.json ]; then
+            echo "Signing s5.cdx.json ..."
+            cosign sign-blob --yes \
+              --output-signature s5.cdx.json.sig \
+              --output-certificate s5.cdx.json.pem \
+              s5.cdx.json
+          fi
+
+          echo "Cosign signing complete."
+          ls -la *.sig *.pem
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            artifacts/**/*.tar.gz
+            artifacts/*.tar.gz.sig
+            artifacts/*.tar.gz.pem
+            artifacts/SHA256SUMS
+            artifacts/SHA256SUMS.sig
+            artifacts/SHA256SUMS.pem
+            artifacts/sbom/s5.cdx.json
+            artifacts/s5.cdx.json.sig
+            artifacts/s5.cdx.json.pem
+            artifacts/completions/*
+            artifacts/manpage/*
+
+  # ===========================================================================
+  # SLSA Provenance: GitHub-native build attestation (SLSA Build L2/L3)
+  # ---------------------------------------------------------------------------
+  # Generates SLSA provenance for all release archives. Attestations are stored
+  # in the GitHub attestation ledger and can be verified with:
+  #
+  #   gh attestation verify <binary> -R <owner>/<repo>
+  # ===========================================================================
+  provenance:
+    name: SLSA Provenance
+    needs: [build]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      attestations: write
+      contents: read
+    strategy:
+      matrix:
+        include:
+          - archive: s5-x86_64-linux-gnu.tar.gz
+          - archive: s5-x86_64-linux-musl.tar.gz
+          - archive: s5-aarch64-linux-gnu.tar.gz
+          - archive: s5-aarch64-linux-musl.tar.gz
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: ${{ matrix.archive }}
+
+      - name: Generate SLSA provenance attestation
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: ${{ matrix.archive }}
+
+  docker:
+    name: Docker multi-arch
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/${{ github.repository }}
+            galti3r/s5
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=latest
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Containerfile.cross
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ===========================================================================
+  # Publish: crates.io
+  # ===========================================================================
+  publish-crate:
+    name: Publish to crates.io
+    runs-on: ubuntu-latest
+    needs: [build]
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Publish to crates.io
+        run: cargo publish
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+
+      - name: Notify Homebrew tap
+        if: success()
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          repository: galti3r/homebrew-s5
+          event-type: new-release
+          client-payload: '{"version": "${{ github.ref_name }}"}'

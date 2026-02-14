@@ -1,0 +1,394 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+  RUST_TOOLCHAIN: "stable"
+
+# Cancel in-progress runs on same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ===========================================================================
+  # Detect changed paths to skip unnecessary jobs
+  # ===========================================================================
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    outputs:
+      rust: ${{ steps.filter.outputs.rust }}
+      ci: ${{ steps.filter.outputs.ci }}
+      demo: ${{ steps.filter.outputs.demo }}
+      docker: ${{ steps.filter.outputs.docker }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            rust:
+              - 'src/**'
+              - 'tests/**'
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+              - 'benches/**'
+              - 'deny.toml'
+              - '.cargo/**'
+              - 'assets/**'
+            ci:
+              - '.github/workflows/**'
+            demo:
+              - 'contrib/demo.tape'
+            docker:
+              - 'Containerfile'
+              - 'Containerfile.cross'
+
+  # ===========================================================================
+  # Lint: fmt + clippy + hadolint
+  # ===========================================================================
+  lint:
+    name: Lint
+    needs: changes
+    if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Install Rust ${{ env.RUST_TOOLCHAIN }}
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          components: rustfmt, clippy
+
+      - name: Cache cargo
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-lint-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-lint-
+
+      - name: cargo fmt
+        run: cargo fmt --all -- --check
+
+      - name: cargo clippy
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: Hadolint (Containerfile)
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Containerfile
+
+      - name: Hadolint (Containerfile.cross)
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Containerfile.cross
+
+      - name: Install commitlint
+        if: github.event_name == 'pull_request'
+        run: npm install -g @commitlint/cli @commitlint/config-conventional
+      - name: Validate commits
+        if: github.event_name == 'pull_request'
+        run: npx commitlint --from ${{ github.event.pull_request.base.sha }} --to HEAD
+
+  # ===========================================================================
+  # Test: unit + E2E
+  # ===========================================================================
+  test:
+    name: Test
+    needs: changes
+    if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Free disk space
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc 2>/dev/null || true
+
+      - name: Install Rust ${{ env.RUST_TOOLCHAIN }}
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+
+      - name: Cache cargo
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-test-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-test-
+
+      - name: Run all tests
+        run: cargo test --all-targets || cargo test --all-targets
+
+  # ===========================================================================
+  # Test MSRV: verify compilation with minimum supported Rust version
+  # ===========================================================================
+  test-msrv:
+    name: Test MSRV (1.88)
+    needs: changes
+    if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Rust 1.88
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.88"
+      - name: Cache cargo
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-msrv-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-msrv-
+      - name: Check MSRV compilation
+        run: cargo check
+
+  # ===========================================================================
+  # Coverage: cargo-tarpaulin
+  # ===========================================================================
+  coverage:
+    name: Coverage
+    needs: changes
+    if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust ${{ env.RUST_TOOLCHAIN }}
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+
+      - name: Cache cargo
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-cov-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-cov-
+
+      - name: Free disk and add swap
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc 2>/dev/null || true
+          if ! swapon --show | grep -q /swapfile; then
+            sudo swapoff /swapfile 2>/dev/null || true
+            sudo rm -f /swapfile
+            sudo fallocate -l 4G /swapfile
+            sudo chmod 600 /swapfile
+            sudo mkswap /swapfile
+            sudo swapon /swapfile
+          fi
+
+      - name: Install cargo-tarpaulin
+        run: cargo install cargo-tarpaulin
+
+      - name: Generate coverage
+        run: cargo tarpaulin --skip-clean --jobs 2 --fail-under 60 --out xml --output-dir coverage/ --lib --test unit
+        env:
+          CARGO_BUILD_JOBS: "2"
+          RUSTFLAGS: "-C linker=cc"
+        timeout-minutes: 15
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: coverage/cobertura.xml
+          fail_ci_if_error: true
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  # ===========================================================================
+  # Security: cargo-audit + cargo-deny
+  # ===========================================================================
+  security:
+    name: Security
+    needs: changes
+    if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust ${{ env.RUST_TOOLCHAIN }}
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+
+      - name: Install security tools
+        run: |
+          cargo install cargo-audit
+          cargo install cargo-deny
+
+      - name: cargo audit
+        run: cargo audit
+
+      - name: cargo deny
+        run: cargo deny check
+
+  # ===========================================================================
+  # SARIF: clippy results in GitHub Security tab
+  # ===========================================================================
+  sarif:
+    name: SARIF Upload
+    needs: changes
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true')
+    permissions:
+      security-events: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust ${{ env.RUST_TOOLCHAIN }}
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+          components: clippy
+
+      - name: Install clippy-sarif and sarif-fmt
+        run: |
+          cargo install clippy-sarif
+          cargo install sarif-fmt
+
+      - name: Run clippy (SARIF)
+        run: >
+          cargo clippy --all-targets --message-format=json |
+          clippy-sarif | tee results.sarif | sarif-fmt
+        continue-on-error: true
+
+      - name: Upload SARIF
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: results.sarif
+
+  # ===========================================================================
+  # E2E Browser: headless Chrome via Podman
+  # ===========================================================================
+  e2e-browser:
+    name: E2E Browser Tests
+    needs: changes
+    if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.ci == 'true' || needs.changes.outputs.demo == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Rust ${{ env.RUST_TOOLCHAIN }}
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+
+      - name: Cache cargo
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-e2e-browser-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-e2e-browser-
+
+      - name: Verify Podman is available
+        run: podman --version
+
+      - name: Pull Chrome Headless image
+        run: podman pull docker.io/chromedp/headless-shell:latest
+
+      - name: Run browser E2E tests
+        run: cargo test --test e2e_browser_dashboard -- --ignored --nocapture
+        env:
+          RUST_LOG: debug
+
+      - name: Capture dashboard screenshots
+        run: |
+          mkdir -p screenshots
+          SCREENSHOT_DIR=screenshots cargo test --test e2e_browser_screenshots -- --ignored --nocapture
+        env:
+          RUST_LOG: debug
+
+      - name: Upload screenshots artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dashboard-screenshots
+          path: screenshots/
+          retention-days: 1
+
+      - name: Cleanup Chrome containers
+        if: always()
+        run: |
+          podman ps -aq --filter name=s5-chrome | xargs -r podman rm -f 2>/dev/null || true
+          podman image rm docker.io/chromedp/headless-shell:latest 2>/dev/null || true
+
+  # ===========================================================================
+  # VHS: generate terminal demo GIF
+  # ===========================================================================
+  vhs-demo:
+    name: Generate Terminal Demo
+    needs: changes
+    if: needs.changes.outputs.rust == 'true' || needs.changes.outputs.demo == 'true' || needs.changes.outputs.ci == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_TOOLCHAIN }}
+
+      - uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-vhs-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-vhs-
+
+      - name: Build s5
+        run: cargo build --release
+
+      - name: Install VHS + deps
+        run: |
+          sudo apt-get update && sudo apt-get install -y ffmpeg fonts-jetbrains-mono
+          curl -fsSL -o /tmp/ttyd "https://github.com/tsl0922/ttyd/releases/latest/download/ttyd.x86_64"
+          sudo install /tmp/ttyd /usr/local/bin/ttyd
+          VHS_VERSION=$(curl -fsSL https://api.github.com/repos/charmbracelet/vhs/releases/latest | grep -oP '"tag_name":\s*"v\K[^"]+')
+          curl -fsSL "https://github.com/charmbracelet/vhs/releases/download/v${VHS_VERSION}/vhs_${VHS_VERSION}_Linux_x86_64.tar.gz" | \
+            sudo tar -xz -C /usr/local/bin --strip-components=1 "vhs_${VHS_VERSION}_Linux_x86_64/vhs"
+
+      - name: Add s5 to PATH
+        run: |
+          mkdir -p ~/.local/bin
+          install target/release/s5 ~/.local/bin/s5
+          echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+
+      - name: Generate demo GIF
+        run: vhs contrib/demo.tape
+
+      - name: Upload GIF
+        uses: actions/upload-artifact@v4
+        with:
+          name: demo-gif
+          path: contrib/demo.gif
+          retention-days: 1
+
+      - name: Stop s5
+        if: always()
+        run: pkill s5 || true
+

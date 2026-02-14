@@ -1,0 +1,42 @@
+[Unit]
+Description=s5 SSH+SOCKS5 proxy server
+Documentation=https://github.com/galti3r/s5
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=s5
+Group=s5
+ExecStart=/usr/local/bin/s5 --config /etc/s5/config.toml
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+
+# Hardening
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+NoNewPrivileges=true
+MemoryDenyWriteExecute=true
+RestrictAddressFamilies=AF_INET AF_INET6
+RestrictNamespaces=true
+RestrictSUIDSGID=true
+LockPersonality=true
+ProtectClock=true
+ProtectControlGroups=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectHostname=true
+
+# File access
+ReadWritePaths=/var/lib/s5 /var/log/s5
+ReadOnlyPaths=/etc/s5
+
+# Resource limits
+LimitNOFILE=65535
+LimitNPROC=4096
+
+[Install]
+WantedBy=multi-user.target
